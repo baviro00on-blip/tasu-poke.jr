@@ -1,0 +1,2111 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>たすポケJr. - ポケモンカードを集めよう！</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700;900&display=swap');
+
+        body {
+            font-family: 'Zen Maru Gothic', sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #312e81 100%);
+            color: #fff;
+            user-select: none;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* 3Dボタン風アニメーション */
+        .btn-3d {
+            transition: all 0.1s ease;
+            box-shadow: 0 5px 0 rgba(0,0,0,0.3);
+        }
+        .btn-3d:active {
+            transform: translateY(4px);
+            box-shadow: 0 1px 0 rgba(0,0,0,0.3);
+        }
+
+        /* カードのホログラム・キラ演出（カード枠内に限定） */
+        .card-foil {
+            position: relative;
+            overflow: hidden;
+        }
+        .card-foil::after {
+            content: '';
+            position: absolute;
+            top: -100%;
+            left: -100%;
+            width: 300%;
+            height: 300%;
+            background: linear-gradient(
+                115deg,
+                transparent 25%,
+                rgba(255, 255, 255, 0.6) 45%,
+                rgba(255, 0, 128, 0.4) 50%,
+                rgba(0, 255, 255, 0.4) 55%,
+                transparent 75%
+            );
+            transform: rotate(25deg);
+            pointer-events: none;
+            opacity: 0.7;
+            animation: foilShift 4s infinite linear;
+        }
+
+        @keyframes foilShift {
+            0% { transform: translateY(-30%) rotate(25deg); }
+            100% { transform: translateY(30%) rotate(25deg); }
+        }
+
+        .gold-glow {
+            box-shadow: 0 0 20px rgba(251, 191, 36, 0.9), 0 0 5px rgba(255, 255, 255, 0.8), inset 0 0 12px rgba(251, 191, 36, 0.6);
+        }
+
+        .super-glow {
+            box-shadow: 0 0 25px rgba(236, 72, 153, 0.9), 0 0 10px rgba(56, 189, 248, 0.9), inset 0 0 15px rgba(255, 255, 255, 0.8);
+        }
+
+        /* 震えるアニメーション（間違い時） */
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-8px); }
+            40%, 80% { transform: translateX(8px); }
+        }
+        .animate-shake {
+            animation: shake 0.4s ease-in-out;
+        }
+
+        /* 脈動アニメーション */
+        @keyframes pulse-subtle {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+        }
+        .animate-pulse-subtle {
+            animation: pulse-subtle 2s infinite ease-in-out;
+        }
+
+        /* モンスターボールゲットアニメーション */
+        @keyframes throwBall {
+            0% { transform: translate(0, 0) scale(0.6) rotate(0deg); opacity: 0; }
+            30% { opacity: 1; transform: translate(120px, -45px) scale(1.15) rotate(360deg); }
+            70% { opacity: 1; transform: translate(250px, 20px) scale(1) rotate(720deg); }
+            100% { opacity: 1; transform: translate(250px, 32px) scale(0.95) rotate(720deg); }
+        }
+        .animate-throw-ball {
+            animation: throwBall 0.7s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+        }
+
+        @keyframes ballWiggle {
+            0%, 100% { transform: translate(250px, 32px) rotate(0deg); }
+            20% { transform: translate(250px, 32px) rotate(-22deg); }
+            40% { transform: translate(250px, 32px) rotate(22deg); }
+            60% { transform: translate(250px, 32px) rotate(-15deg); }
+            80% { transform: translate(250px, 32px) rotate(15deg); }
+        }
+        .animate-ball-wiggle {
+            animation: ballWiggle 0.6s ease-in-out 3;
+        }
+
+        /* 風で揺れる草むらのアニメーション */
+        @keyframes grassSway {
+            0%, 100% { transform: skewX(0deg); }
+            50% { transform: skewX(-4deg); }
+        }
+        .animate-grass-sway {
+            transform-origin: bottom center;
+            animation: grassSway 2.5s ease-in-out infinite;
+        }
+
+        /* ミサイル飛翔アニメーション */
+        @keyframes flyMissile {
+            0% { transform: translate(0, 0) scale(0.6) rotate(15deg); opacity: 0; }
+            20% { opacity: 1; }
+            80% { transform: translate(180px, -10px) scale(1.1) rotate(5deg); opacity: 1; }
+            100% { transform: translate(210px, 0px) scale(1.2) rotate(0deg); opacity: 0; }
+        }
+        .animate-fly-missile {
+            animation: flyMissile 0.45s ease-in forwards;
+        }
+
+        /* ドット絵キャラクターの小刻みなバトルアニメーション */
+        @keyframes pixelBounce {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-3px); }
+        }
+        .animate-pixel-bounce {
+            animation: pixelBounce 0.4s steps(2) infinite;
+        }
+
+        @keyframes pixelMonster {
+            0%, 100% { transform: translateY(0px) scaleX(1); }
+            50% { transform: translateY(-3px) scaleX(1.02); }
+        }
+        .animate-pixel-monster {
+            animation: pixelMonster 0.5s steps(2) infinite;
+        }
+
+        /* ドット絵のくっきり描画指定 */
+        .pixelated {
+            image-rendering: pixelated;
+        }
+
+        /* 超豪華レインボーネオンボーダー（全クリア・MUR時） */
+        @keyframes rainbowGlow {
+            0% { box-shadow: 0 0 25px #ef4444, inset 0 0 15px #ef4444; }
+            20% { box-shadow: 0 0 25px #f59e0b, inset 0 0 15px #f59e0b; }
+            40% { box-shadow: 0 0 25px #10b981, inset 0 0 15px #10b981; }
+            60% { box-shadow: 0 0 25px #06b6d4, inset 0 0 15px #06b6d4; }
+            80% { box-shadow: 0 0 25px #8b5cf6, inset 0 0 15px #8b5cf6; }
+            100% { box-shadow: 0 0 25px #ec4899, inset 0 0 15px #ec4899; }
+        }
+        .animate-rainbow-glow {
+            animation: rainbowGlow 2s linear infinite;
+        }
+    </style>
+</head>
+<body class="flex flex-col h-screen text-slate-100 overflow-hidden relative">
+
+    <!-- お祝い用花火・紙吹雪 Canvas -->
+    <canvas id="celebration-canvas" class="pointer-events-none fixed inset-0 z-50 hidden"></canvas>
+
+    <!-- ヘッダーナビゲーション -->
+    <header class="bg-slate-900/90 border-b border-indigo-500/30 px-4 py-2.5 shadow-md shrink-0">
+        <div class="max-w-4xl mx-auto flex justify-between items-center">
+            <div class="flex items-center space-x-2 cursor-pointer" onclick="showStageSelect()">
+                <div class="w-9 h-9 rounded-full bg-gradient-to-tr from-red-500 to-yellow-400 flex items-center justify-center font-black text-lg shadow-md border-2 border-white text-slate-900">
+                    ＋
+                </div>
+                <h1 class="font-black text-lg sm:text-xl tracking-wider text-amber-300 drop-shadow">たすポケJr.</h1>
+            </div>
+            
+            <div class="flex items-center space-x-2">
+                <button onclick="showAlbum()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-1.5 px-3.5 rounded-full border border-indigo-300/40 flex items-center gap-1.5 shadow-md btn-3d text-xs sm:text-sm">
+                    <i data-lucide="book-open" class="w-4 h-4 text-yellow-300"></i>
+                    <span>カードずかん (<span id="card-count">0/20</span>)</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-1 max-w-4xl w-full mx-auto p-3 flex flex-col justify-between overflow-hidden">
+
+        <!-- 1. レベル選択画面 -->
+        <section id="stage-select-screen" class="flex flex-col justify-between h-full py-2 space-y-3">
+            <div class="text-center space-y-1">
+                <h2 class="text-xl sm:text-2xl font-extrabold text-white drop-shadow">「レベル」をえらぼう！</h2>
+                <p class="text-indigo-200 text-xs sm:text-sm">クリアするとポケモンカードをGETできるよ！</p>
+            </div>
+
+            <!-- 通知用トーストメッセージ -->
+            <div id="toast-message" class="hidden transition-all duration-300 transform -translate-y-2 opacity-0 bg-slate-900/95 border-2 border-amber-400 text-amber-200 text-xs sm:text-sm font-black px-4 py-2 rounded-full shadow-2xl text-center max-w-sm mx-auto">
+                メッセージ
+            </div>
+
+            <div id="stages-grid" class="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-xl mx-auto w-full my-auto">
+                <!-- JavaScriptでレベルボタンが動的に挿入されます -->
+            </div>
+
+            <div id="stage-footer-tip" class="text-center text-slate-400 text-[11px]">
+                💡 クリアすると次のレベルがオープン！高いレベルほどレアなカードがたくさんもらえるよ！
+            </div>
+        </section>
+
+        <!-- 2. ゲーム画面 -->
+        <section id="game-screen" class="hidden flex flex-col justify-between h-full max-w-md mx-auto w-full py-1">
+            <!-- 進行度・ヘッダー情報 -->
+            <div class="w-full bg-slate-900/80 p-2.5 rounded-2xl border border-indigo-500/30 flex justify-between items-center shadow-lg shrink-0">
+                <div class="flex items-center gap-2">
+                    <span id="current-stage-title" class="text-lg sm:text-xl font-black text-amber-300">レベル1</span>
+                    <span id="current-round-tag" class="text-[11px] bg-indigo-500/40 text-indigo-200 px-2 py-0.5 rounded-full border border-indigo-400/30">こたえが 5いか</span>
+                </div>
+                <!-- ライフ表示 -->
+                <div class="flex items-center space-x-1" id="hearts-container">
+                    <i data-lucide="heart" class="w-6 h-6 text-red-500 fill-red-500"></i>
+                    <i data-lucide="heart" class="w-6 h-6 text-red-500 fill-red-500"></i>
+                    <i data-lucide="heart" class="w-6 h-6 text-red-500 fill-red-500"></i>
+                </div>
+            </div>
+
+            <!-- 残り問題数 10連四角ゲージ表示エリア -->
+            <div id="master-gauge-container" class="w-full bg-slate-900/80 p-2 rounded-xl border border-purple-500/30 flex items-center justify-between gap-2 shadow-md shrink-0 my-1">
+                <span class="text-[10px] font-black text-amber-300 shrink-0">のこり</span>
+                <div id="master-gauge-boxes" class="flex flex-1 items-center justify-between gap-1">
+                    <!-- JSで10個の四角ゲージを動的生成 -->
+                </div>
+            </div>
+
+            <!-- ドット絵バトルエリア（青空と風に揺れる草むら背景） -->
+            <div class="w-full border-2 border-emerald-400/60 rounded-2xl p-2 flex items-center justify-between shrink-0 my-1 relative overflow-hidden h-36 shadow-2xl bg-gradient-to-b from-sky-400 via-sky-200 to-emerald-300">
+                
+                <!-- 雲アニメーション（背景遠景） -->
+                <div class="absolute top-2 left-6 w-12 h-4 bg-white/70 rounded-full blur-[0.5px]"></div>
+                <div class="absolute top-4 right-12 w-16 h-5 bg-white/60 rounded-full blur-[0.5px]"></div>
+
+                <!-- 風で揺れる草むらレイヤー（下部） -->
+                <div class="absolute bottom-0 inset-x-0 h-10 bg-emerald-500 border-t-2 border-emerald-400 flex items-end justify-around animate-grass-sway overflow-hidden pointer-events-none">
+                    <div class="w-0 h-0 border-l-[8px] border-l-transparent border-r-[8px] border-r-transparent border-b-[18px] border-b-emerald-600"></div>
+                    <div class="w-0 h-0 border-l-[12px] border-l-transparent border-r-[12px] border-r-transparent border-b-[24px] border-b-emerald-600"></div>
+                    <div class="w-0 h-0 border-l-[10px] border-l-transparent border-r-[10px] border-r-transparent border-b-[20px] border-b-emerald-600"></div>
+                    <div class="w-0 h-0 border-l-[14px] border-l-transparent border-r-[14px] border-r-transparent border-b-[26px] border-b-emerald-600"></div>
+                    <div class="w-0 h-0 border-l-[9px] border-l-transparent border-r-[9px] border-r-transparent border-b-[19px] border-b-emerald-600"></div>
+                </div>
+
+                <!-- 左：ポケモンマスター -->
+                <div class="relative z-20 flex items-center justify-center pl-2">
+                    <div class="w-16 h-16 animate-pixel-bounce flex items-center justify-center filter drop-shadow-md">
+                        <svg class="w-16 h-16 pixelated" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <rect x="8" y="2" width="16" height="4" fill="#ef4444"/>
+                            <rect x="6" y="6" width="20" height="2" fill="#ef4444"/>
+                            <rect x="18" y="6" width="8" height="2" fill="#ffffff"/>
+                            <rect x="6" y="8" width="21" height="2" fill="#b91c1c"/>
+                            <rect x="8" y="10" width="14" height="6" fill="#fde047"/>
+                            <rect x="10" y="10" width="12" height="6" fill="#fed7aa"/>
+                            <rect x="18" y="11" width="3" height="1" fill="#1e293b"/>
+                            <rect x="18" y="12" width="2" height="2" fill="#1e293b"/>
+                            <rect x="19" y="12" width="1" height="1" fill="#ffffff"/>
+                            <rect x="8" y="16" width="16" height="10" fill="#2563eb"/>
+                            <rect x="12" y="16" width="8" height="8" fill="#ffffff"/>
+                            <rect x="14" y="16" width="4" height="8" fill="#e0f2fe"/>
+                            <rect x="4" y="17" width="4" height="6" fill="#1d4ed8"/>
+                            <rect x="24" y="17" width="4" height="6" fill="#fed7aa"/>
+                            <rect x="10" y="26" width="4" height="5" fill="#1e293b"/>
+                            <rect x="18" y="26" width="4" height="5" fill="#1e293b"/>
+                            <rect x="8" y="29" width="6" height="2" fill="#ef4444"/>
+                            <rect x="18" y="29" width="6" height="2" fill="#ef4444"/>
+                        </svg>
+                    </div>
+
+                    <!-- 飛んでいくミサイル -->
+                    <div id="missile-anim" class="hidden absolute left-12 top-4 z-30 pointer-events-none">
+                        <svg class="w-8 h-8 pixelated drop-shadow-lg" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <rect x="2" y="6" width="10" height="4" fill="#f97316"/>
+                            <rect x="12" y="7" width="3" height="2" fill="#ef4444"/>
+                            <rect x="0" y="5" width="3" height="2" fill="#ea580c"/>
+                            <rect x="0" y="9" width="3" height="2" fill="#ea580c"/>
+                            <rect x="4" y="7" width="2" height="2" fill="#fef08a"/>
+                        </svg>
+                    </div>
+
+                    <!-- モンスターボール捕獲用要素 -->
+                    <div id="pokeball-anim" class="hidden absolute left-8 top-4 z-50 pointer-events-none">
+                        <svg class="w-9 h-9 drop-shadow-xl" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <circle cx="12" cy="12" r="10" fill="#ffffff" stroke="#0f172a" stroke-width="2"/>
+                            <path d="M2 12 A10 10 0 0 1 22 12 Z" fill="#ef4444"/>
+                            <line x1="2" y1="12" x2="22" y2="12" stroke="#0f172a" stroke-width="2"/>
+                            <circle cx="12" cy="12" r="3.5" fill="#ffffff" stroke="#0f172a" stroke-width="2"/>
+                            <circle cx="12" cy="12" r="1.5" fill="#0f172a"/>
+                        </svg>
+                    </div>
+                </div>
+
+                <!-- 右：野生のドット絵怪獣 -->
+                <div id="wild-pokemon-container" class="relative z-10 flex flex-col items-center justify-center w-36 h-32 pr-2 overflow-visible">
+                    <div id="target-pokemon-scale-box" class="transition-all duration-500 origin-center flex flex-col items-center scale-[2.2]">
+                        <div class="animate-pixel-monster flex flex-col items-center">
+                            <div id="pixel-monster-svg-box" class="w-16 h-16 filter drop-shadow-xl flex items-center justify-center">
+                                <!-- JSで生成されるドット絵 -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="hit-explosion" class="hidden absolute z-30 pointer-events-none">
+                        <div class="text-3xl animate-ping">💥</div>
+                    </div>
+
+                    <div id="capture-stars" class="hidden absolute z-40 pointer-events-none text-2xl font-black text-amber-300 animate-bounce drop-shadow">
+                        ✨ GET! ✨
+                    </div>
+                </div>
+            </div>
+
+            <!-- 問題表示 -->
+            <div class="w-full shrink-0 my-2">
+                <div class="w-full h-32 sm:h-36 rounded-2xl bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500 border-4 border-white shadow-xl flex flex-col items-center justify-center p-2 text-slate-900 animate-pulse-subtle">
+                    <div id="question-text" class="text-4xl sm:text-5xl font-black tracking-wider text-slate-900 my-1">
+                        1 ＋ 1
+                    </div>
+                    <div id="yomi-text" class="text-xs sm:text-sm font-bold text-amber-900 bg-amber-100/90 px-3 py-0.5 rounded-full border border-amber-300">
+                        いち たす いち は
+                    </div>
+                </div>
+            </div>
+
+            <!-- 選択肢 4択 -->
+            <div class="w-full shrink-0 my-2">
+                <div id="options-grid" class="flex justify-center items-center gap-2 sm:gap-4 w-full">
+                    <!-- 動的に生成 -->
+                </div>
+            </div>
+
+            <div class="text-center text-indigo-300/70 text-[11px] shrink-0">
+                せいかいの 丸いカードを選んでね！
+            </div>
+        </section>
+
+        <!-- 3. クリア演出画面 -->
+        <section id="clear-screen" class="hidden flex flex-col justify-center items-center h-full max-w-2xl mx-auto w-full py-2 relative z-40">
+            <div id="clear-modal-box" class="bg-slate-900/95 border-2 border-amber-400/60 rounded-3xl p-4 sm:p-5 shadow-2xl w-full text-center space-y-3 relative overflow-y-auto max-h-full">
+                <div class="space-y-1">
+                    <div id="clear-badge" class="inline-block px-4 py-1 rounded-full text-xs font-black bg-amber-400 text-slate-900 shadow">
+                        GOLD CLEAR!
+                    </div>
+                    <h2 id="clear-title" class="text-2xl font-black text-amber-300 drop-shadow">レベル1 クリア！</h2>
+                    <p id="clear-subtitle" class="text-indigo-200 text-xs sm:text-sm">ポケモンカードを ゲットしたよ！</p>
+                    
+                    <div id="world-clear-banner" class="hidden my-2 py-2 px-3 bg-gradient-to-r from-amber-400 via-rose-500 to-purple-600 text-white font-black text-sm rounded-xl shadow-lg border-2 border-white animate-bounce">
+                        🎉 コンプリート達成！ 🎉
+                    </div>
+                </div>
+
+                <!-- 獲得カードプレビュー（1〜5枚対応） -->
+                <div class="flex justify-center py-1 overflow-x-auto">
+                    <div id="reward-card-container" class="flex flex-wrap justify-center items-center gap-2.5">
+                        <!-- カードDOM -->
+                    </div>
+                </div>
+
+                <div class="space-y-2 pt-1 max-w-md mx-auto">
+                    <button id="next-btn" onclick="handleNextStep()" class="w-full py-3 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white text-lg font-black rounded-xl shadow-lg btn-3d border border-white/20 flex items-center justify-center gap-2">
+                        <span>つぎへ すすむ</span>
+                        <i data-lucide="arrow-right" class="w-5 h-5"></i>
+                    </button>
+                    <button onclick="startStage(currentStageNumber)" class="w-full py-2.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-white font-black text-base rounded-xl shadow-md btn-3d border border-white/20 flex items-center justify-center gap-2">
+                        <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+                        <span>もう１かいする</span>
+                    </button>
+                    <button onclick="showStageSelect()" class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-black rounded-xl shadow-md btn-3d border border-white/20 flex items-center justify-center gap-2 text-sm">
+                        <i data-lucide="home" class="w-4 h-4"></i>
+                        <span>メニューに戻る</span>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. アルバム（カード図鑑）画面 -->
+        <section id="album-screen" class="hidden flex flex-col h-full space-y-2 overflow-hidden">
+            <div class="flex justify-between items-center border-b border-indigo-500/30 pb-2 shrink-0">
+                <div>
+                    <h2 class="text-lg sm:text-xl font-black text-amber-300 flex items-center gap-1.5">
+                        <i data-lucide="award" class="w-6 h-6 text-yellow-400"></i> ポケモンカードずかん
+                    </h2>
+                    <p class="text-indigo-200 text-xs">ゲットしたカードをタップして大きくみられるよ！</p>
+                </div>
+                <button onclick="showStageSelect()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-3 py-1.5 rounded-xl text-xs btn-3d">
+                    もどる
+                </button>
+            </div>
+
+            <!-- レア度別フィルターボタンバー (横スクロール対応) -->
+            <div id="album-filter-bar" class="flex gap-1.5 overflow-x-auto pb-1.5 shrink-0 scrollbar-none">
+                <!-- JSで動的生成 -->
+            </div>
+
+            <!-- カードグリッド -->
+            <div id="album-grid" class="flex-1 overflow-y-auto grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 p-1">
+                <!-- 動的に生成 -->
+            </div>
+        </section>
+
+        <!-- 5. カード拡大モーダル -->
+        <div id="card-modal" class="hidden fixed inset-0 bg-slate-950/85 backdrop-blur-sm z-50 flex flex-col items-center justify-center p-4" onclick="closeCardModal()">
+            <div class="relative transform scale-125 sm:scale-150 transition-transform duration-300" onclick="event.stopPropagation()">
+                <div id="modal-card-container"></div>
+            </div>
+            <button onclick="closeCardModal()" class="mt-12 bg-white/20 hover:bg-white/30 text-white font-black px-6 py-2 rounded-full border border-white/40 text-sm shadow-xl backdrop-blur-md">
+                とじる
+            </button>
+        </div>
+
+        <!-- ゲームオーバーモーダル -->
+        <div id="gameover-modal" class="hidden fixed inset-0 bg-slate-950/85 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div class="bg-slate-900 border-2 border-red-500/60 rounded-3xl p-5 max-w-sm w-full text-center space-y-4 shadow-2xl">
+                <div class="w-14 h-14 bg-red-500/20 text-red-400 rounded-full flex items-center justify-center mx-auto border border-red-500/40">
+                    <i data-lucide="heart-off" class="w-8 h-8"></i>
+                </div>
+                <div class="space-y-1">
+                    <h3 class="text-xl font-black text-white">ざんねん！ライフがなくなったよ</h3>
+                    <p class="text-slate-300 text-xs">もういちど 挑戦して クリアを目指そう！</p>
+                </div>
+                <button onclick="retryCurrentStage()" class="w-full py-3 bg-gradient-to-r from-red-500 to-rose-600 hover:from-red-400 hover:to-rose-500 text-white font-black text-base rounded-xl shadow-lg btn-3d">
+                    もう一回する
+                </button>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- JavaScript ロジック -->
+    <script>
+        // --- 1. 定数とデータ定義 ---
+
+        const SAVE_KEY = 'tasupoke_jr_save_v1';
+
+        const LEVELS_INFO = [
+            { level: 1, title: 'レベル1', desc: 'こたえが 5いか', rewardCount: 1, maxPool: 20 },
+            { level: 2, title: 'レベル2', desc: 'こたえが 10いか', rewardCount: 2, maxPool: 30 },
+            { level: 3, title: 'レベル3', desc: '10いくつ ＋ 1けた', rewardCount: 3, maxPool: 40 },
+            { level: 4, title: 'レベル4', desc: 'くりあがりの たしざん', rewardCount: 4, maxPool: 50 },
+            { level: 5, title: 'レベル5', desc: 'レベル2〜4 ランダム', rewardCount: 5, maxPool: 60 }
+        ];
+
+        const NUM_YOMI = {
+            0: "れい", 1: "いち", 2: "に", 3: "さん", 4: "よん", 5: "ご",
+            6: "ろく", 7: "なな", 8: "はち", 9: "きゅう", 10: "じゅう",
+            11: "じゅういち", 12: "じゅうに", 13: "じゅうさん", 14: "じゅうよん", 15: "じゅうご",
+            16: "じゅうろく", 17: "じゅうなな", 18: "じゅうはち", 19: "じゅうきゅう", 20: "にじゅう"
+        };
+
+        const NUM_SPEAK = {
+            0: "レイ", 1: "イチ", 2: "ニ", 3: "サン", 4: "ヨン", 5: "ゴ",
+            6: "ロク", 7: "ナナ", 8: "ハチ", 9: "キュウ", 10: "ジュウ",
+            11: "ジュウイチ", 12: "ジュウニ", 13: "ジュウサン", 14: "ジュウヨン", 15: "ジュウゴ",
+            16: "ジュウロク", 17: "ジュウナナ", 18: "ジュウハチ", 19: "ジュウキュウ", 20: "ニジュウ"
+        };
+
+        // レア度9段階定義
+        const RARITY_ORDER = ['C', 'U', 'R', 'RR', 'AR', 'SR', 'SAR', 'UR', 'MUR'];
+
+        // レベル別レア度出現ウェイト（全ての段階でレア度が低いほど出現率が高く、レベルが進むほどレア度の高いカードが引ける）
+        const LEVEL_RARITY_WEIGHTS = {
+            1: { 'C': 100, 'U': 40 },
+            2: { 'C': 100, 'U': 55, 'R': 25 },
+            3: { 'C': 100, 'U': 65, 'R': 35, 'RR': 18 },
+            4: { 'C': 100, 'U': 70, 'R': 45, 'RR': 25, 'AR': 12, 'SR': 6 },
+            5: { 'C': 100, 'U': 75, 'R': 55, 'RR': 35, 'AR': 20, 'SR': 12, 'SAR': 6, 'UR': 3, 'MUR': 1.5 }
+        };
+
+        // レアリティの重みに基づいてカードを1枚ランダム抽選するヘルパー関数
+        function pickWeightedCard(cardArray, level) {
+            if (!cardArray || cardArray.length === 0) return POKEMON_CARDS[0];
+            const weightTable = LEVEL_RARITY_WEIGHTS[level] || LEVEL_RARITY_WEIGHTS[1];
+            const weights = cardArray.map(c => weightTable[c.rarity] || 1);
+            const totalWeight = weights.reduce((sum, w) => sum + w, 0);
+            let random = Math.random() * totalWeight;
+            for (let i = 0; i < cardArray.length; i++) {
+                if (random < weights[i]) {
+                    return cardArray[i];
+                }
+                random -= weights[i];
+            }
+            return cardArray[0];
+        }
+
+        // 60種類のポケモンカードデータ
+        const POKEMON_CARDS = [
+            // C (10枚) - 1〜10番目
+            { id: 'p1', name: 'キャタピー', hp: 50, type: '草', typeBg: 'bg-lime-500 text-slate-900', rarity: 'C', attack: 'いとをはく', damage: '10', cost: '🍃', theme: 'grass', bgTone: 'from-emerald-950 via-lime-950 to-slate-950', accentColor: '#84cc16', scale: 0.8 },
+            { id: 'p2', name: 'コラッタ', hp: 40, type: '無', typeBg: 'bg-amber-300 text-slate-900', rarity: 'C', attack: 'かみつく', damage: '20', cost: '⚪', theme: 'normal', bgTone: 'from-amber-950 via-amber-900 to-slate-950', accentColor: '#d97706', scale: 0.8 },
+            { id: 'p3', name: 'ポッポ', hp: 50, type: '無', typeBg: 'bg-amber-300 text-slate-900', rarity: 'C', attack: 'かぜおこし', damage: '20', cost: '⚪', theme: 'normal', bgTone: 'from-amber-950 via-slate-900 to-slate-950', accentColor: '#f59e0b', scale: 0.85 },
+            { id: 'p4', name: 'ニャース', hp: 60, type: '無', typeBg: 'bg-yellow-300 text-slate-900', rarity: 'C', attack: 'ねこにこばん', damage: '20', cost: '⚪', theme: 'normal', bgTone: 'from-yellow-950 via-amber-900 to-slate-950', accentColor: '#f59e0b', scale: 0.9 },
+            { id: 'p5', name: 'コダック', hp: 70, type: '水', typeBg: 'bg-sky-400 text-slate-900', rarity: 'C', attack: 'みずでっぽう', damage: '20', cost: '💧', theme: 'water', bgTone: 'from-blue-950 via-sky-950 to-slate-950', accentColor: '#38bdf8', scale: 0.9 },
+            { id: 'p6', name: 'ピチュー', hp: 50, type: '雷', typeBg: 'bg-yellow-400 text-slate-900', rarity: 'C', attack: 'パチパチ', damage: '20', cost: '⚡', theme: 'lightning', bgTone: 'from-amber-950 via-yellow-900 to-slate-950', accentColor: '#eab308', scale: 0.8 },
+            { id: 'p7', name: 'パモ', hp: 60, type: '雷', typeBg: 'bg-yellow-400 text-slate-900', rarity: 'C', attack: 'でんきショック', damage: '30', cost: '⚡', theme: 'lightning', bgTone: 'from-orange-950 via-amber-900 to-slate-950', accentColor: '#f97316', scale: 0.85 },
+            { id: 'p8', name: 'モクロー', hp: 60, type: '草', typeBg: 'bg-lime-500 text-slate-900', rarity: 'C', attack: 'つつく', damage: '20', cost: '🍃', theme: 'grass', bgTone: 'from-emerald-950 via-lime-950 to-slate-950', accentColor: '#84cc16', scale: 0.85 },
+            { id: 'p9', name: 'イーブイ', hp: 70, type: '無', typeBg: 'bg-amber-300 text-slate-900', rarity: 'C', attack: 'たいあたり', damage: '20', cost: '⚪', theme: 'normal', bgTone: 'from-amber-950 via-amber-900 to-slate-950', accentColor: '#d97706', scale: 0.9 },
+            { id: 'p10', name: 'トゲピー', hp: 50, type: '超', typeBg: 'bg-pink-400 text-white', rarity: 'C', attack: 'ゆびをふる', damage: '30', cost: '🔮', theme: 'psychic', bgTone: 'from-pink-950 via-rose-950 to-slate-950', accentColor: '#f43f5e', scale: 0.8 },
+
+            // U (10枚) - 11〜20番目
+            { id: 'p11', name: 'ピカチュウ', hp: 70, type: '雷', typeBg: 'bg-yellow-400 text-slate-900', rarity: 'U', attack: 'エレキボール', damage: '40', cost: '⚡⚪', theme: 'lightning', bgTone: 'from-yellow-950 via-amber-900 to-slate-950', accentColor: '#facc15', scale: 0.95 },
+            { id: 'p12', name: 'フシギダネ', hp: 70, type: '草', typeBg: 'bg-emerald-500 text-white', rarity: 'U', attack: 'つるのムチ', damage: '30', cost: '🍃', theme: 'grass', bgTone: 'from-emerald-950 via-teal-950 to-slate-950', accentColor: '#059669', scale: 0.9 },
+            { id: 'p13', name: 'ヒトカゲ', hp: 70, type: '炎', typeBg: 'bg-orange-500 text-white', rarity: 'U', attack: 'ひのこ', damage: '30', cost: '🔥', theme: 'fire', bgTone: 'from-red-950 via-rose-900 to-slate-950', accentColor: '#ea580c', scale: 0.9 },
+            { id: 'p14', name: 'ゼニガメ', hp: 70, type: '水', typeBg: 'bg-blue-500 text-white', rarity: 'U', attack: 'みずでっぽう', damage: '30', cost: '💧', theme: 'water', bgTone: 'from-blue-950 via-indigo-950 to-slate-950', accentColor: '#2563eb', scale: 0.9 },
+            { id: 'p15', name: 'ポッチャマ', hp: 70, type: '水', typeBg: 'bg-sky-400 text-slate-900', rarity: 'U', attack: 'バブルこうせん', damage: '40', cost: '💧', theme: 'water', bgTone: 'from-cyan-950 via-sky-900 to-slate-950', accentColor: '#0284c7', scale: 0.9 },
+            { id: 'p16', name: 'シャワーズ', hp: 110, type: '水', typeBg: 'bg-sky-400 text-slate-900', rarity: 'U', attack: 'みずのしたどう', damage: '60', cost: '💧⚪', theme: 'water', bgTone: 'from-teal-950 via-blue-950 to-slate-950', accentColor: '#06b6d4', scale: 1.0 },
+            { id: 'p17', name: 'サンダース', hp: 110, type: '雷', typeBg: 'bg-yellow-400 text-slate-900', rarity: 'U', attack: 'ピンミサイル', damage: '60', cost: '⚡⚪', theme: 'lightning', bgTone: 'from-amber-950 via-yellow-900 to-slate-950', accentColor: '#eab308', scale: 1.0 },
+            { id: 'p18', name: 'ブースター', hp: 120, type: '炎', typeBg: 'bg-orange-500 text-white', rarity: 'U', attack: 'かえんほうしゃ', damage: '70', cost: '🔥🔥', theme: 'fire', bgTone: 'from-red-950 via-orange-950 to-slate-950', accentColor: '#ea580c', scale: 1.0 },
+            { id: 'p19', name: 'プリン', hp: 60, type: '無', typeBg: 'bg-pink-300 text-slate-900', rarity: 'U', attack: 'うたう', damage: '20', cost: '⚪', theme: 'normal', bgTone: 'from-pink-950 via-rose-950 to-slate-950', accentColor: '#f43f5e', scale: 0.9 },
+            { id: 'p20', name: 'ケーシィ', hp: 60, type: '超', typeBg: 'bg-purple-500 text-white', rarity: 'U', attack: 'テレポート', damage: '20', cost: '🔮', theme: 'psychic', bgTone: 'from-purple-950 via-indigo-950 to-slate-950', accentColor: '#a855f7', scale: 0.85 },
+
+            // R (10枚) - 21〜30番目
+            { id: 'p21', name: 'ライチュウ', hp: 120, type: '雷', typeBg: 'bg-yellow-400 text-slate-900', rarity: 'R', attack: '10まんボルト', damage: '90', cost: '⚡⚡⚪', theme: 'lightning', bgTone: 'from-yellow-950 via-amber-900 to-slate-950', accentColor: '#facc15', scale: 1.0 },
+            { id: 'p22', name: 'ピッピ', hp: 60, type: '超', typeBg: 'bg-pink-300 text-slate-900', rarity: 'R', attack: 'ムーンフォース', damage: '50', cost: '🔮⚪', theme: 'psychic', bgTone: 'from-pink-950 via-fuchsia-950 to-slate-950', accentColor: '#ec4899', scale: 0.9 },
+            { id: 'p23', name: 'メノクラゲ', hp: 80, type: '水', typeBg: 'bg-blue-600 text-white', rarity: 'R', attack: 'どくばり', damage: '40', cost: '💧', theme: 'water', bgTone: 'from-cyan-950 via-blue-950 to-slate-950', accentColor: '#0284c7', scale: 0.9 },
+            { id: 'p24', name: 'ギャラドス', hp: 180, type: '水', typeBg: 'bg-blue-600 text-white', rarity: 'R', attack: 'ハイパーボイス', damage: '120', cost: '💧💧⚪⚪', theme: 'water', bgTone: 'from-blue-950 via-indigo-950 to-slate-950', accentColor: '#1d4ed8', scale: 1.2 },
+            { id: 'p25', name: 'ラプラス', hp: 130, type: '水', typeBg: 'bg-sky-500 text-white', rarity: 'R', attack: 'なみのり', damage: '90', cost: '💧💧⚪', theme: 'water', bgTone: 'from-sky-950 via-cyan-950 to-slate-950', accentColor: '#0284c7', scale: 1.1 },
+            { id: 'p26', name: 'ロコン', hp: 60, type: '炎', typeBg: 'bg-orange-500 text-white', rarity: 'R', attack: 'きつねび', damage: '30', cost: '🔥', theme: 'fire', bgTone: 'from-orange-950 via-red-950 to-slate-950', accentColor: '#f97316', scale: 0.85 },
+            { id: 'p27', name: 'ガーディ', hp: 80, type: '炎', typeBg: 'bg-orange-500 text-white', rarity: 'R', attack: 'かみつくだく', damage: '50', cost: '🔥⚪', theme: 'fire', bgTone: 'from-amber-950 via-orange-950 to-slate-950', accentColor: '#ea580c', scale: 0.95 },
+            { id: 'p28', name: 'パルシェン', hp: 130, type: '水', typeBg: 'bg-indigo-600 text-white', rarity: 'R', attack: 'つららばり', damage: '80', cost: '💧💧', theme: 'water', bgTone: 'from-slate-950 via-indigo-950 to-slate-950', accentColor: '#4f46e5', scale: 1.05 },
+            { id: 'p29', name: 'ストライク', hp: 90, type: '草', typeBg: 'bg-emerald-500 text-white', rarity: 'R', attack: 'れんぞくぎり', damage: '60', cost: '🍃⚪', theme: 'grass', bgTone: 'from-emerald-950 via-lime-950 to-slate-950', accentColor: '#10b981', scale: 1.0 },
+            { id: 'p30', name: 'エレブー', hp: 90, type: '雷', typeBg: 'bg-yellow-400 text-slate-900', rarity: 'R', attack: 'かみなりパンチ', damage: '70', cost: '⚡⚡', theme: 'lightning', bgTone: 'from-yellow-950 via-amber-900 to-slate-950', accentColor: '#eab308', scale: 1.0 },
+
+            // RR (10枚) - 31〜40番目
+            { id: 'p31', name: 'ピカチュウ ex', hp: 200, type: '雷', typeBg: 'bg-yellow-400 text-slate-900', rarity: 'RR', attack: '10万ボルト', damage: '120', cost: '⚡⚡', theme: 'lightning', bgTone: 'from-yellow-950 via-amber-900 to-slate-950', accentColor: '#facc15', scale: 1.05 },
+            { id: 'p32', name: 'リザードン ex', hp: 330, type: '炎', typeBg: 'bg-orange-500 text-white', rarity: 'RR', attack: 'れんごくしはい', damage: '180', cost: '🔥🔥', theme: 'fire', bgTone: 'from-red-950 via-rose-900 to-slate-950', accentColor: '#ea580c', scale: 1.15 },
+            { id: 'p33', name: 'カメックス ex', hp: 330, type: '水', typeBg: 'bg-blue-500 text-white', rarity: 'RR', attack: 'ハイドロボム', damage: '160', cost: '💧💧', theme: 'water', bgTone: 'from-blue-950 via-indigo-950 to-slate-950', accentColor: '#2563eb', scale: 1.15 },
+            { id: 'p34', name: 'フシギバナ ex', hp: 340, type: '草', typeBg: 'bg-emerald-500 text-white', rarity: 'RR', attack: 'ジャイアントブルーム', damage: '150', cost: '🍃🍃', theme: 'grass', bgTone: 'from-emerald-950 via-teal-950 to-slate-950', accentColor: '#059669', scale: 1.15 },
+            { id: 'p35', name: 'ミュウツー ex', hp: 310, type: '超', typeBg: 'bg-purple-600 text-white', rarity: 'RR', attack: 'サイコドライブ', damage: '220', cost: '🔮🔮', theme: 'psychic', bgTone: 'from-purple-950 via-fuchsia-950 to-slate-950', accentColor: '#9333ea', scale: 1.1 },
+            { id: 'p36', name: 'ゲッコウガ ex', hp: 300, type: '水', typeBg: 'bg-blue-600 text-white', rarity: 'RR', attack: 'しのびの手裏剣', damage: '170', cost: '💧⚪', theme: 'water', bgTone: 'from-indigo-950 via-blue-950 to-slate-950', accentColor: '#2563eb', scale: 1.1 },
+            { id: 'p37', name: 'ルカリオ ex', hp: 280, type: '闘', typeBg: 'bg-amber-700 text-white', rarity: 'RR', attack: '波動ブラスト', damage: '160', cost: '🥊🥊', theme: 'fight', bgTone: 'from-cyan-950 via-slate-900 to-slate-950', accentColor: '#0284c7', scale: 1.05 },
+            { id: 'p38', name: 'サーナイト ex', hp: 310, type: '超', typeBg: 'bg-pink-500 text-white', rarity: 'RR', attack: 'サイコエンブレイス', damage: '190', cost: '🔮🔮', theme: 'psychic', bgTone: 'from-fuchsia-950 via-pink-950 to-slate-950', accentColor: '#ec4899', scale: 1.05 },
+            { id: 'p39', name: 'ゲンガー ex', hp: 300, type: '超', typeBg: 'bg-indigo-900 text-white', rarity: 'RR', attack: 'ナイトゲイズ', damage: '180', cost: '🔮🔮', theme: 'psychic', bgTone: 'from-purple-950 via-indigo-950 to-slate-950', accentColor: '#7e22ce', scale: 1.1 },
+            { id: 'p40', name: 'カイリュー ex', hp: 330, type: 'ドラゴン', typeBg: 'bg-amber-600 text-white', rarity: 'RR', attack: '流星群ブレイク', damage: '230', cost: '🔥💧⚪', theme: 'dragon', bgTone: 'from-amber-950 via-orange-950 to-slate-950', accentColor: '#f59e0b', scale: 1.2 },
+
+            // AR (6枚) - 41〜46番目
+            { id: 'p41', name: 'カビゴン AR', hp: 150, type: '無', typeBg: 'bg-teal-800 text-white', rarity: 'AR', attack: 'とおせんぼ', damage: '100', cost: '⚪⚪⚪', theme: 'normal', bgTone: 'from-teal-950 via-emerald-950 to-slate-950', accentColor: '#0d9488', scale: 1.25 },
+            { id: 'p42', name: 'ナンジャモのハラバリー AR', hp: 140, type: '雷', typeBg: 'bg-yellow-400 text-slate-900', rarity: 'AR', attack: 'エレキチャージ', damage: '110', cost: '⚡⚡', theme: 'lightning', bgTone: 'from-amber-950 via-yellow-900 to-slate-950', accentColor: '#eab308', scale: 1.2 },
+            { id: 'p43', name: 'ポッチャマ AR', hp: 80, type: '水', typeBg: 'bg-sky-400 text-slate-900', rarity: 'AR', attack: 'みずたまりダイブ', damage: '60', cost: '💧', theme: 'water', bgTone: 'from-cyan-950 via-sky-900 to-slate-950', accentColor: '#0284c7', scale: 1.15 },
+            { id: 'p44', name: 'イーブイ AR', hp: 80, type: '無', typeBg: 'bg-amber-300 text-slate-900', rarity: 'AR', attack: 'フレンズハート', damage: '50', cost: '⚪', theme: 'normal', bgTone: 'from-amber-950 via-rose-950 to-slate-950', accentColor: '#d97706', scale: 1.15 },
+            { id: 'p45', name: 'デデンネ AR', hp: 70, type: '雷', typeBg: 'bg-yellow-400 text-slate-900', rarity: 'AR', attack: 'ほっぺすりすり', damage: '40', cost: '⚡', theme: 'lightning', bgTone: 'from-amber-950 via-yellow-950 to-slate-950', accentColor: '#fbbf24', scale: 1.1 },
+            { id: 'p46', name: 'モクロー AR', hp: 70, type: '草', typeBg: 'bg-lime-500 text-slate-900', rarity: 'AR', attack: 'このはストーム', damage: '50', cost: '🍃', theme: 'grass', bgTone: 'from-emerald-950 via-teal-950 to-slate-950', accentColor: '#84cc16', scale: 1.1 },
+
+            // SR (6枚) - 47〜52番目
+            { id: 'p47', name: 'レックウザ ex SR', hp: 230, type: 'ドラゴン', typeBg: 'bg-teal-700 text-white', rarity: 'SR', attack: 'ドラゴンバースト', damage: '210', cost: '⚡🔥', theme: 'dragon', bgTone: 'from-teal-950 via-emerald-950 to-slate-950', accentColor: '#0d9488', scale: 1.25 },
+            { id: 'p48', name: 'ミュウ ex SR', hp: 180, type: '超', typeBg: 'bg-pink-400 text-white', rarity: 'SR', attack: 'ゲノムハック', damage: '150', cost: '⚪⚪⚪', theme: 'psychic', bgTone: 'from-pink-950 via-rose-950 to-slate-950', accentColor: '#f43f5e', scale: 1.1 },
+            { id: 'p49', name: 'フリーザー ex SR', hp: 220, type: '水', typeBg: 'bg-sky-400 text-slate-900', rarity: 'SR', attack: 'アイスフザード', damage: '170', cost: '💧💧', theme: 'water', bgTone: 'from-sky-950 via-cyan-950 to-slate-950', accentColor: '#38bdf8', scale: 1.2 },
+            { id: 'p50', name: 'サンダー ex SR', hp: 220, type: '雷', typeBg: 'bg-yellow-400 text-slate-900', rarity: 'SR', attack: 'ライトニングボルト', damage: '180', cost: '⚡⚡', theme: 'lightning', bgTone: 'from-yellow-950 via-amber-950 to-slate-950', accentColor: '#eab308', scale: 1.2 },
+            { id: 'p51', name: 'ファイヤー ex SR', hp: 220, type: '炎', typeBg: 'bg-orange-500 text-white', rarity: 'SR', attack: 'バーニングウィング', damage: '180', cost: '🔥🔥', theme: 'fire', bgTone: 'from-red-950 via-orange-950 to-slate-950', accentColor: '#f97316', scale: 1.2 },
+            { id: 'p52', name: 'ハッサム ex SR', hp: 270, type: '鋼', typeBg: 'bg-slate-600 text-white', rarity: 'SR', attack: 'レッドスライサー', damage: '200', cost: '⚪⚪⚪', theme: 'normal', bgTone: 'from-rose-950 via-red-950 to-slate-950', accentColor: '#dc2626', scale: 1.2 },
+
+            // SAR (4枚) - 53〜56番目
+            { id: 'p53', name: 'アルセウス ex SAR', hp: 300, type: '無', typeBg: 'bg-amber-200 text-slate-900', rarity: 'SAR', attack: '神話の輝き', damage: '250', cost: '⚪⚪⚪', theme: 'legend', bgTone: 'from-amber-950 via-yellow-900 to-slate-950', accentColor: '#fde047', scale: 1.3 },
+            { id: 'p54', name: 'ミライドン ex SAR', hp: 230, type: '雷', typeBg: 'bg-yellow-400 text-slate-900', rarity: 'SAR', attack: 'サイバーボルト', damage: '240', cost: '⚡⚡', theme: 'lightning', bgTone: 'from-violet-950 via-purple-950 to-slate-950', accentColor: '#a855f7', scale: 1.25 },
+            { id: 'p55', name: 'コライドン ex SAR', hp: 230, type: '闘', typeBg: 'bg-red-700 text-white', rarity: 'SAR', attack: 'プライマルインパクト', damage: '240', cost: '🥊🥊', theme: 'fight', bgTone: 'from-rose-950 via-red-950 to-slate-950', accentColor: '#e11d48', scale: 1.25 },
+            { id: 'p56', name: 'ギラティナ ex SAR', hp: 280, type: 'ドラゴン', typeBg: 'bg-purple-900 text-white', rarity: 'SAR', attack: '次元崩壊インパクト', damage: '280', cost: '🔮🍃', theme: 'legend', bgTone: 'from-slate-950 via-purple-950 to-slate-950', accentColor: '#7e22ce', scale: 1.3 },
+
+            // UR (2枚) - 57〜58番目
+            { id: 'p57', name: 'ルギア ex UR', hp: 280, type: '無', typeBg: 'bg-slate-200 text-slate-900', rarity: 'UR', attack: '黄金のエアロブラスト', damage: '260', cost: '⚪⚪⚪⚪', theme: 'legend', bgTone: 'from-amber-950 via-yellow-950 to-slate-950', accentColor: '#eab308', scale: 1.3 },
+            { id: 'p58', name: 'カイオーガ ex UR', hp: 280, type: '水', typeBg: 'bg-blue-600 text-white', rarity: 'UR', attack: '黄金の大海津波', damage: '260', cost: '💧💧💧', theme: 'water', bgTone: 'from-amber-950 via-blue-950 to-slate-950', accentColor: '#eab308', scale: 1.3 },
+
+            // MUR (2枚) - 59〜60番目
+            { id: 'p59', name: 'ピカチュウ MUR', hp: 350, type: '雷', typeBg: 'bg-yellow-400 text-slate-900', rarity: 'MUR', attack: 'メガ・ギガ100万ボルト', damage: '300', cost: '⚡⚡⚡', theme: 'lightning', bgTone: 'from-yellow-950 via-amber-900 to-slate-950', accentColor: '#facc15', scale: 1.35 },
+            { id: 'p60', name: 'アルセウス MUR', hp: 380, type: '無', typeBg: 'bg-amber-200 text-slate-900', rarity: 'MUR', attack: '全知全能創世光芒', damage: '320', cost: '⚪⚪⚪⚪', theme: 'legend', bgTone: 'from-amber-950 via-yellow-900 to-slate-950', accentColor: '#fde047', scale: 1.35 }
+        ];
+
+        // --- 2. ゲーム状態管理 ---
+
+        let gameState = {
+            unlockedLevels: [1],
+            clearedRanks: {},
+            ownedCards: [],
+            newCards: [],
+            currentLevel: 1,
+            currentQuestionIndex: 0,
+            lives: 3,
+            questions: [],
+            currentMonsterIndex: 0
+        };
+
+        let currentStageNumber = 1;
+        let isProcessingAnswer = false;
+        let currentAlbumFilter = 'ALL';
+
+        // 最初の20種類（インデックス0〜19）がコンプリートされているか判定
+        function isFirst20Complete() {
+            const first20 = POKEMON_CARDS.slice(0, 20);
+            return first20.every(c => gameState.ownedCards.includes(c.id));
+        }
+
+        // 最初の40種類（インデックス0〜39）がコンプリートされているか判定
+        function isFirst40Complete() {
+            const first40 = POKEMON_CARDS.slice(0, 40);
+            return first40.every(c => gameState.ownedCards.includes(c.id));
+        }
+
+        // 現在の全体のカード種類上限（20 -> 40 -> 60）を取得
+        function getGlobalCardLimit() {
+            if (!isFirst20Complete()) return 20;
+            if (!isFirst40Complete()) return 40;
+            return 60;
+        }
+
+        // 図鑑カウント表示更新 (0/20 -> 20/40 -> 40/60)
+        function updateCardCountDisplay() {
+            const countEl = document.getElementById('card-count');
+            if (!countEl) return;
+            
+            const limit = getGlobalCardLimit();
+            if (limit === 20) {
+                const owned20 = POKEMON_CARDS.slice(0, 20).filter(c => gameState.ownedCards.includes(c.id)).length;
+                countEl.innerText = `${owned20}/20`;
+            } else if (limit === 40) {
+                const owned40 = POKEMON_CARDS.slice(0, 40).filter(c => gameState.ownedCards.includes(c.id)).length;
+                countEl.innerText = `${owned40}/40`;
+            } else {
+                countEl.innerText = `${gameState.ownedCards.length}/60`;
+            }
+        }
+
+        // --- セーブ・ロード処理 ---
+        function saveData() {
+            try {
+                localStorage.setItem(SAVE_KEY, JSON.stringify({
+                    unlockedLevels: gameState.unlockedLevels,
+                    clearedRanks: gameState.clearedRanks,
+                    ownedCards: gameState.ownedCards,
+                    newCards: gameState.newCards
+                }));
+            } catch (e) {
+                console.error('Save error:', e);
+            }
+            updateCardCountDisplay();
+        }
+
+        function loadSaveData() {
+            try {
+                const saved = localStorage.getItem(SAVE_KEY);
+                if (saved) {
+                    const parsed = JSON.parse(saved);
+                    if (parsed.unlockedLevels) gameState.unlockedLevels = parsed.unlockedLevels;
+                    if (parsed.clearedRanks) gameState.clearedRanks = parsed.clearedRanks;
+                    if (parsed.ownedCards) gameState.ownedCards = parsed.ownedCards;
+                    if (parsed.newCards) gameState.newCards = parsed.newCards;
+                }
+            } catch (e) {
+                console.error('Load error:', e);
+            }
+
+            if (!Array.isArray(gameState.unlockedLevels) || gameState.unlockedLevels.length === 0) {
+                gameState.unlockedLevels = [1];
+            }
+
+            updateCardCountDisplay();
+        }
+
+        // --- サウンド＆音声読み上げ（Web Audio API & SpeechSynthesis） ---
+        let audioCtx = null;
+        let bgmInterval = null;
+
+        function getAudioContext() {
+            if (!audioCtx) {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                if (AudioContext) audioCtx = new AudioContext();
+            }
+            if (audioCtx && audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+            return audioCtx;
+        }
+
+        document.addEventListener('pointerdown', () => { getAudioContext(); }, { once: false });
+
+        function playPinpon() {
+            const ctx = getAudioContext();
+            if (!ctx) return;
+            const now = ctx.currentTime;
+
+            const osc1 = ctx.createOscillator();
+            const gain1 = ctx.createGain();
+            osc1.type = 'sine';
+            osc1.frequency.setValueAtTime(1046.50, now);
+            gain1.gain.setValueAtTime(0.3, now);
+            gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+            osc1.connect(gain1);
+            gain1.connect(ctx.destination);
+            osc1.start(now);
+            osc1.stop(now + 0.3);
+
+            const osc2 = ctx.createOscillator();
+            const gain2 = ctx.createGain();
+            osc2.type = 'sine';
+            osc2.frequency.setValueAtTime(1567.98, now + 0.15);
+            gain2.gain.setValueAtTime(0.3, now + 0.15);
+            gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
+            osc2.connect(gain2);
+            gain2.connect(ctx.destination);
+            osc2.start(now + 0.15);
+            osc2.stop(now + 0.5);
+        }
+
+        function playBuzzer() {
+            const ctx = getAudioContext();
+            if (!ctx) return;
+            const now = ctx.currentTime;
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(150, now);
+            osc.frequency.setValueAtTime(120, now + 0.15);
+            gain.gain.setValueAtTime(0.2, now);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start(now);
+            osc.stop(now + 0.4);
+        }
+
+        function playFanfare(isAllClear = false) {
+            const ctx = getAudioContext();
+            if (!ctx) return;
+            const now = ctx.currentTime;
+
+            const notes = isAllClear 
+                ? [523.25, 659.25, 783.99, 1046.50, 880.00, 1046.50, 1174.66, 1318.51]
+                : [523.25, 659.25, 783.99, 1046.50];
+
+            notes.forEach((freq, idx) => {
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                const startTime = now + idx * 0.12;
+                const duration = idx === notes.length - 1 ? 0.8 : 0.15;
+
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(freq, startTime);
+                gain.gain.setValueAtTime(0.3, startTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
+
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.start(startTime);
+                osc.stop(startTime + duration);
+            });
+        }
+
+        function playCompleteFanfare() {
+            const ctx = getAudioContext();
+            if (!ctx) return;
+            const now = ctx.currentTime;
+            const notes = [523.25, 659.25, 783.99, 1046.50, 1174.66, 1318.51, 1567.98, 1760.00, 2093.00];
+
+            notes.forEach((freq, idx) => {
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                const startTime = now + idx * 0.1;
+                const duration = idx === notes.length - 1 ? 1.5 : 0.2;
+
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(freq, startTime);
+                gain.gain.setValueAtTime(0.35, startTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
+
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.start(startTime);
+                osc.stop(startTime + duration);
+            });
+        }
+
+        function startBGM() {
+            stopBGM();
+            const ctx = getAudioContext();
+            if (!ctx) return;
+
+            const bassNotes = [110, 110, 146.83, 110, 130.81, 110, 123.47, 98];
+            const leadNotes = [440, 523.25, 659.25, 587.33, 523.25, 440, 493.88, 523.25];
+            let noteIdx = 0;
+
+            bgmInterval = setInterval(() => {
+                if (!audioCtx || audioCtx.state !== 'running') return;
+                const now = audioCtx.currentTime;
+
+                const bassOsc = audioCtx.createOscillator();
+                const bassGain = audioCtx.createGain();
+                bassOsc.type = 'sawtooth';
+                bassOsc.frequency.setValueAtTime(bassNotes[noteIdx % bassNotes.length], now);
+                bassGain.gain.setValueAtTime(0.08, now);
+                bassGain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+                bassOsc.connect(bassGain);
+                bassGain.connect(audioCtx.destination);
+                bassOsc.start(now);
+                bassOsc.stop(now + 0.12);
+
+                const leadOsc = audioCtx.createOscillator();
+                const leadGain = audioCtx.createGain();
+                leadOsc.type = 'square';
+                leadOsc.frequency.setValueAtTime(leadNotes[noteIdx % leadNotes.length], now);
+                leadGain.gain.setValueAtTime(0.05, now);
+                leadGain.gain.exponentialRampToValueAtTime(0.001, now + 0.14);
+                leadOsc.connect(leadGain);
+                leadGain.connect(audioCtx.destination);
+                leadOsc.start(now);
+                leadOsc.stop(now + 0.14);
+
+                noteIdx++;
+            }, 150);
+        }
+
+        function stopBGM() {
+            if (bgmInterval) {
+                clearInterval(bgmInterval);
+                bgmInterval = null;
+            }
+        }
+
+        function speakAddQuestion(num1, num2) {
+            if (!('speechSynthesis' in window)) return;
+            window.speechSynthesis.cancel();
+
+            const n1Str = NUM_SPEAK[num1] || `${num1}`;
+            const n2Str = NUM_SPEAK[num2] || `${num2}`;
+            const speakText = `${n1Str} タス ${n2Str} ワ`;
+            const uttr = new SpeechSynthesisUtterance(speakText);
+            uttr.lang = 'ja-JP';
+            uttr.rate = 1.1;
+            uttr.pitch = 1.2;
+            uttr.volume = 1.0;
+            window.speechSynthesis.speak(uttr);
+        }
+
+        function speakAddAnswer(answer) {
+            if (!('speechSynthesis' in window)) return;
+
+            const speakText = NUM_SPEAK[answer] || `${answer}`;
+            const uttr = new SpeechSynthesisUtterance(speakText);
+            uttr.lang = 'ja-JP';
+            uttr.rate = 1.1;
+            uttr.pitch = 1.2;
+            uttr.volume = 1.0;
+
+            setTimeout(() => {
+                window.speechSynthesis.speak(uttr);
+            }, 200);
+        }
+
+        function showToast(msg) {
+            const toast = document.getElementById('toast-message');
+            if (!toast) return;
+            toast.innerText = msg;
+            toast.classList.remove('hidden', '-translate-y-2', 'opacity-0');
+            toast.classList.add('translate-y-0', 'opacity-100');
+
+            setTimeout(() => {
+                toast.classList.add('-translate-y-2', 'opacity-0');
+                setTimeout(() => toast.classList.add('hidden'), 300);
+            }, 2500);
+        }
+
+        function renderStages() {
+            const grid = document.getElementById('stages-grid');
+            if (!grid) return;
+            grid.innerHTML = '';
+
+            LEVELS_INFO.forEach((info) => {
+                const lvl = info.level;
+                const isUnlocked = gameState.unlockedLevels.includes(lvl);
+                const rank = gameState.clearedRanks[lvl];
+
+                const btn = document.createElement('button');
+                const spanCol = (lvl === 5) ? 'sm:col-span-2' : '';
+
+                let bgStyle = "bg-slate-800/80 border-slate-700 text-slate-500 opacity-60 cursor-not-allowed";
+                let badgeHtml = "";
+
+                if (isUnlocked) {
+                    if (rank === 'gold') {
+                        bgStyle = "bg-gradient-to-br from-amber-300 via-yellow-400 to-amber-500 text-slate-900 border-amber-200 gold-glow btn-3d";
+                        badgeHtml = `<span class="text-xs font-black whitespace-nowrap">🥇金</span>`;
+                    } else if (rank === 'silver') {
+                        bgStyle = "bg-gradient-to-br from-slate-300 via-slate-200 to-slate-400 text-slate-900 border-slate-100 btn-3d shadow-lg";
+                        badgeHtml = `<span class="text-xs font-black whitespace-nowrap">🥈銀</span>`;
+                    } else if (rank === 'bronze') {
+                        bgStyle = "bg-gradient-to-br from-amber-700 via-amber-600 to-amber-800 text-amber-100 border-amber-500 btn-3d shadow-lg";
+                        badgeHtml = `<span class="text-xs font-black whitespace-nowrap">🥉銅</span>`;
+                    } else {
+                        bgStyle = "bg-gradient-to-br from-indigo-600 to-blue-700 hover:from-indigo-500 hover:to-blue-600 text-white border-indigo-400 btn-3d shadow-lg";
+                        badgeHtml = `<span class="text-[11px] font-bold text-indigo-200 whitespace-nowrap">トライ</span>`;
+                    }
+                }
+
+                btn.className = `${spanCol} p-3.5 rounded-2xl border-2 flex items-center justify-between px-5 font-black transition-all ${bgStyle}`;
+                btn.innerHTML = `
+                    <div class="text-left">
+                        <div class="text-xl sm:text-2xl leading-tight">${info.title}</div>
+                        <div class="text-xs font-bold opacity-90">${info.desc}（カード${info.rewardCount}枚）</div>
+                    </div>
+                    <div class="flex flex-col items-end shrink-0 ml-2">
+                        ${isUnlocked ? badgeHtml : '<i data-lucide="lock" class="w-5 h-5 text-slate-500"></i>'}
+                    </div>
+                `;
+
+                if (isUnlocked) {
+                    btn.onclick = () => startStage(lvl);
+                } else {
+                    btn.onclick = () => {
+                        showToast(`🔒 レベル${lvl - 1}を クリアすると 開放されるよ！`);
+                        playBuzzer();
+                    };
+                }
+
+                grid.appendChild(btn);
+            });
+
+            if (window.lucide) lucide.createIcons();
+        }
+
+        function showStageSelect() {
+            stopBGM();
+            hideAllScreens();
+            document.getElementById('stage-select-screen').classList.remove('hidden');
+            renderStages();
+        }
+
+        function hideAllScreens() {
+            ['stage-select-screen', 'game-screen', 'clear-screen', 'album-screen', 'gameover-modal'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.classList.add('hidden');
+            });
+        }
+
+        function startStage(levelNum) {
+            currentStageNumber = levelNum;
+            gameState.currentLevel = levelNum;
+            gameState.lives = 3;
+            gameState.currentQuestionIndex = 0;
+            gameState.currentMonsterIndex = 0;
+            gameState.questions = generateQuestions(levelNum);
+
+            hideAllScreens();
+            document.getElementById('game-screen').classList.remove('hidden');
+
+            const info = LEVELS_INFO.find(l => l.level === levelNum) || LEVELS_INFO[0];
+            document.getElementById('current-stage-title').innerText = info.title;
+            document.getElementById('current-round-tag').innerText = info.desc;
+
+            // バトルエリア表示の復元
+            const targetBox = document.getElementById('target-pokemon-scale-box');
+            if (targetBox) {
+                targetBox.classList.remove('opacity-0', 'scale-0');
+            }
+            const ballAnim = document.getElementById('pokeball-anim');
+            if (ballAnim) {
+                ballAnim.className = "hidden absolute left-8 top-4 z-50 pointer-events-none";
+            }
+            const stars = document.getElementById('capture-stars');
+            if (stars) stars.classList.add('hidden');
+
+            updateHeartsUI();
+            updateMasterGaugeUI();
+            renderMonsterSvg();
+            showQuestion();
+            startBGM();
+        }
+
+        // 出題順をランダムにし、同じ問題が連続しないように並び替える
+        function shuffleQuestions(list) {
+            const arr = [...list];
+            for (let i = arr.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [arr[i], arr[j]] = [arr[j], arr[i]];
+            }
+            for (let i = 1; i < arr.length; i++) {
+                if (arr[i].num1 === arr[i - 1].num1 && arr[i].num2 === arr[i - 1].num2) {
+                    for (let j = i + 1; j < arr.length; j++) {
+                        if (arr[j].num1 !== arr[i - 1].num1 || arr[j].num2 !== arr[i - 1].num2) {
+                            [arr[i], arr[j]] = [arr[j], arr[i]];
+                            break;
+                        }
+                    }
+                }
+            }
+            return arr;
+        }
+
+        // レベル別問題生成プール取得
+        function getPoolForLevel(level) {
+            const pool = [];
+            if (level === 1) {
+                // 答えが5以下で0を含まない足し算
+                for (let a = 1; a <= 4; a++) {
+                    for (let b = 1; b <= 4; b++) {
+                        if (a + b <= 5) {
+                            pool.push({ num1: a, num2: b, answer: a + b });
+                        }
+                    }
+                }
+            } else if (level === 2) {
+                // 答えが必ず6以上10以下の足し算（各項に0が入る問題は出さない）
+                for (let a = 1; a <= 9; a++) {
+                    for (let b = 1; b <= 9; b++) {
+                        if (a + b >= 6 && a + b <= 10) {
+                            pool.push({ num1: a, num2: b, answer: a + b });
+                        }
+                    }
+                }
+            } else if (level === 3) {
+                // 「10いくつ＋1桁＝10いくつ」または「1桁＋10いくつ＝10いくつ」（答え11以上、0なし）
+                for (let a = 11; a <= 18; a++) {
+                    for (let b = 1; b <= 8; b++) {
+                        if (a + b <= 19) {
+                            pool.push({ num1: a, num2: b, answer: a + b });
+                        }
+                    }
+                }
+                for (let a = 1; a <= 8; a++) {
+                    for (let b = 11; b <= 18; b++) {
+                        if (a + b <= 19) {
+                            pool.push({ num1: a, num2: b, answer: a + b });
+                        }
+                    }
+                }
+            } else if (level === 4) {
+                // 繰り上がる足し算（答えが10になる問題は出さない＝11以上、0なし）
+                for (let a = 1; a <= 9; a++) {
+                    for (let b = 1; b <= 9; b++) {
+                        if (a + b >= 11) {
+                            pool.push({ num1: a, num2: b, answer: a + b });
+                        }
+                    }
+                }
+            }
+            return pool;
+        }
+
+        function generateQuestions(level) {
+            if (level === 1) {
+                // 答えが0になる問題が1問
+                const qZeroAns = { num1: 0, num2: 0, answer: 0 };
+
+                // 足す数または足される数が0の問題が1問（答えが0を除く）
+                const oneZeroPool = [];
+                for (let n = 1; n <= 5; n++) {
+                    oneZeroPool.push({ num1: 0, num2: n, answer: n });
+                    oneZeroPool.push({ num1: n, num2: 0, answer: n });
+                }
+                const qOneZero = oneZeroPool[Math.floor(Math.random() * oneZeroPool.length)];
+
+                // 残りの8問（答えが5以下で0を含まない足し算）
+                const restPool = shuffleQuestions(getPoolForLevel(1)).slice(0, 8);
+
+                return shuffleQuestions([qZeroAns, qOneZero, ...restPool]);
+            }
+
+            if (level === 2) {
+                // 答えが必ず6以上の数（10問）
+                const pool = shuffleQuestions(getPoolForLevel(2));
+                return shuffleQuestions(pool.slice(0, 10));
+            }
+
+            if (level === 3) {
+                // 答えが11以上の数（10問・答えが10になる問題は出さない）
+                const pool = shuffleQuestions(getPoolForLevel(3));
+                return shuffleQuestions(pool.slice(0, 10));
+            }
+
+            if (level === 4) {
+                // 答えが10になる問題は出さない（10問）
+                const pool = shuffleQuestions(getPoolForLevel(4));
+                return shuffleQuestions(pool.slice(0, 10));
+            }
+
+            if (level === 5) {
+                // レベル2から1問、レベル3から2問、レベル4から7問出題
+                const q2 = shuffleQuestions(getPoolForLevel(2)).slice(0, 1);
+
+                // レベル3の出題ルールから生成した問題のうち、レベル2と被らないものから2問選出
+                const l3Candidates = generateQuestions(3).filter(
+                    item => !q2.some(existing => existing.num1 === item.num1 && existing.num2 === item.num2)
+                );
+                const q3 = shuffleQuestions(l3Candidates).slice(0, 2);
+
+                const q4 = shuffleQuestions(getPoolForLevel(4)).slice(0, 7);
+
+                return shuffleQuestions([...q2, ...q3, ...q4]);
+            }
+
+            const pool = getPoolForLevel(level);
+            return shuffleQuestions(pool).slice(0, 10);
+        }
+
+        function updateHeartsUI() {
+            const container = document.getElementById('hearts-container');
+            if (!container) return;
+            container.innerHTML = '';
+            const totalHearts = 3;
+
+            for (let i = 0; i < totalHearts; i++) {
+                const heart = document.createElement('i');
+                heart.setAttribute('data-lucide', 'heart');
+                if (i < gameState.lives) {
+                    heart.className = "w-6 h-6 text-red-500 fill-red-500";
+                } else {
+                    heart.className = "w-6 h-6 text-slate-600 fill-slate-700 opacity-40";
+                }
+                container.appendChild(heart);
+            }
+            if (window.lucide) lucide.createIcons();
+        }
+
+        // 残り問題数 10連四角ゲージUI制御（全レベル共通）
+        function updateMasterGaugeUI() {
+            const container = document.getElementById('master-gauge-container');
+            const boxesContainer = document.getElementById('master-gauge-boxes');
+            if (!container || !boxesContainer) return;
+
+            container.classList.remove('hidden');
+            boxesContainer.innerHTML = '';
+
+            const totalQ = gameState.questions.length || 10;
+            const remaining = Math.max(0, totalQ - gameState.currentQuestionIndex);
+
+            for (let i = 0; i < totalQ; i++) {
+                const box = document.createElement('div');
+                if (i < remaining) {
+                    box.className = "flex-1 h-3.5 sm:h-4 rounded-md bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500 border border-white shadow-sm transition-all duration-300";
+                } else {
+                    box.className = "flex-1 h-3.5 sm:h-4 rounded-md bg-slate-800/80 border border-slate-700/60 opacity-20 transition-all duration-300";
+                }
+                boxesContainer.appendChild(box);
+            }
+        }
+
+        function renderMonsterSvg() {
+            const box = document.getElementById('pixel-monster-svg-box');
+            if (!box) return;
+
+            const totalQ = gameState.questions.length || 10;
+            const progress = gameState.currentQuestionIndex / totalQ;
+            const scaleBox = document.getElementById('target-pokemon-scale-box');
+            if (scaleBox) {
+                const scale = Math.max(0.3, 2.2 - (progress * 1.8));
+                scaleBox.style.transform = `scale(${scale})`;
+            }
+
+            const colors = ['#ef4444', '#f59e0b', '#10b981', '#06b6d4', '#8b5cf6', '#ec4899', '#3b82f6'];
+            const bodyColor = colors[gameState.currentLevel % colors.length];
+
+            box.innerHTML = `
+                <svg class="w-16 h-16 pixelated drop-shadow-lg" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <rect x="6" y="2" width="4" height="6" fill="${bodyColor}"/>
+                    <rect x="22" y="2" width="4" height="6" fill="${bodyColor}"/>
+                    <rect x="8" y="6" width="16" height="18" fill="${bodyColor}"/>
+                    <rect x="10" y="8" width="12" height="14" fill="#ffffff" opacity="0.2"/>
+                    <rect x="10" y="10" width="4" height="4" fill="#ffffff"/>
+                    <rect x="18" y="10" width="4" height="4" fill="#ffffff"/>
+                    <rect x="12" y="11" width="2" height="2" fill="#000000"/>
+                    <rect x="18" y="11" width="2" height="2" fill="#000000"/>
+                    <rect x="12" y="17" width="8" height="2" fill="#000000"/>
+                    <rect x="13" y="17" width="2" height="2" fill="#ffffff"/>
+                    <rect x="17" y="17" width="2" height="2" fill="#ffffff"/>
+                    <rect x="4" y="14" width="4" height="6" fill="${bodyColor}"/>
+                    <rect x="24" y="14" width="4" height="6" fill="${bodyColor}"/>
+                    <rect x="8" y="24" width="6" height="4" fill="${bodyColor}"/>
+                    <rect x="18" y="24" width="6" height="4" fill="${bodyColor}"/>
+                </svg>
+            `;
+        }
+
+        function showQuestion() {
+            isProcessingAnswer = false;
+            const q = gameState.questions[gameState.currentQuestionIndex];
+            if (!q) return;
+
+            document.getElementById('question-text').innerText = `${q.num1} ＋ ${q.num2}`;
+
+            const yomi1 = NUM_YOMI[q.num1] || `${q.num1}`;
+            const yomi2 = NUM_YOMI[q.num2] || `${q.num2}`;
+            document.getElementById('yomi-text').innerText = `${yomi1} たす ${yomi2} は`;
+
+            speakAddQuestion(q.num1, q.num2);
+
+            const optionsGrid = document.getElementById('options-grid');
+            optionsGrid.innerHTML = '';
+
+            const shuffled = generateSmartOptions(q);
+
+            shuffled.forEach(ans => {
+                const btn = document.createElement('button');
+                btn.className = "w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-gradient-to-tr from-indigo-600 via-blue-500 to-cyan-400 border-4 border-white text-white text-xl sm:text-2xl font-black shadow-xl btn-3d flex items-center justify-center hover:scale-105 transition-transform";
+                btn.innerText = ans;
+                btn.onclick = () => checkAnswer(ans, btn);
+                optionsGrid.appendChild(btn);
+            });
+        }
+
+        function generateSmartOptions(q) {
+            const num1 = q.num1;
+            const num2 = q.num2;
+            const answer = q.answer;
+
+            const candidates = new Set();
+
+            // 近い数値の誤答候補
+            [answer - 1, answer + 1, answer - 2, answer + 2, answer + 3, answer - 3].forEach(val => {
+                if (val >= 0 && val <= 20 && val !== answer) {
+                    candidates.add(val);
+                }
+            });
+
+            // 引き算や桁間違いなどの誤答候補
+            [Math.abs(num1 - num2), answer + 10, answer - 10].forEach(val => {
+                if (val >= 0 && val <= 20 && val !== answer) {
+                    candidates.add(val);
+                }
+            });
+
+            // 0〜20の数値から補充
+            for (let v = 0; v <= 20; v++) {
+                if (v !== answer) candidates.add(v);
+            }
+
+            const sortedCandidates = Array.from(candidates).sort((a, b) => Math.abs(a - answer) - Math.abs(b - answer));
+            const topPool = sortedCandidates.slice(0, Math.min(6, sortedCandidates.length));
+            topPool.sort(() => Math.random() - 0.5);
+
+            const wrongOptions = topPool.slice(0, 3);
+            const result = [answer, ...wrongOptions];
+
+            return result.sort(() => Math.random() - 0.5);
+        }
+
+        function checkAnswer(selectedAns, btn) {
+            if (isProcessingAnswer) return;
+            const q = gameState.questions[gameState.currentQuestionIndex];
+            if (!q) return;
+
+            if (selectedAns === q.answer) {
+                isProcessingAnswer = true;
+                playPinpon();
+                speakAddAnswer(q.answer);
+
+                btn.classList.remove('from-indigo-600', 'via-blue-500', 'to-cyan-400');
+                btn.classList.add('from-emerald-400', 'to-teal-500', 'scale-110');
+
+                const isFinalQuestion = (gameState.currentQuestionIndex + 1 >= gameState.questions.length);
+
+                if (!isFinalQuestion) {
+                    // 途中問題：ミサイル攻撃
+                    const missile = document.getElementById('missile-anim');
+                    if (missile) {
+                        missile.classList.remove('hidden');
+                        missile.classList.add('animate-fly-missile');
+                        setTimeout(() => {
+                            missile.classList.add('hidden');
+                            missile.classList.remove('animate-fly-missile');
+                            
+                            const hit = document.getElementById('hit-explosion');
+                            if (hit) {
+                                hit.classList.remove('hidden');
+                                setTimeout(() => hit.classList.add('hidden'), 350);
+                            }
+                        }, 400);
+                    }
+
+                    setTimeout(() => {
+                        gameState.currentQuestionIndex++;
+                        updateMasterGaugeUI();
+                        renderMonsterSvg();
+                        showQuestion();
+                    }, 1200);
+                } else {
+                    // 最終問題：モンスターボール捕獲アニメーション発動！
+                    gameState.currentQuestionIndex++;
+                    updateMasterGaugeUI();
+
+                    const ballAnim = document.getElementById('pokeball-anim');
+                    const targetBox = document.getElementById('target-pokemon-scale-box');
+                    const stars = document.getElementById('capture-stars');
+
+                    setTimeout(() => {
+                        if (ballAnim) {
+                            ballAnim.classList.remove('hidden');
+                            ballAnim.classList.add('animate-throw-ball');
+                        }
+
+                        // ボールが当たり、ポケモンがボールに吸い込まれる
+                        setTimeout(() => {
+                            if (targetBox) {
+                                targetBox.classList.add('opacity-0', 'scale-0');
+                            }
+                            const hit = document.getElementById('hit-explosion');
+                            if (hit) {
+                                hit.classList.remove('hidden');
+                                setTimeout(() => hit.classList.add('hidden'), 300);
+                            }
+                        }, 450);
+
+                        // ボールがグラグラ揺れてゲット確定
+                        setTimeout(() => {
+                            if (ballAnim) {
+                                ballAnim.classList.remove('animate-throw-ball');
+                                ballAnim.classList.add('animate-ball-wiggle');
+                            }
+                        }, 750);
+
+                        // 星が飛んでGET!メッセージ
+                        setTimeout(() => {
+                            if (stars) stars.classList.remove('hidden');
+                        }, 2200);
+
+                        // クリア処理へ
+                        setTimeout(() => {
+                            handleStageClear();
+                        }, 2800);
+
+                    }, 400);
+                }
+
+            } else {
+                playBuzzer();
+                btn.classList.add('animate-shake', 'from-rose-600', 'to-red-700');
+                setTimeout(() => btn.classList.remove('animate-shake'), 400);
+
+                gameState.lives--;
+                updateHeartsUI();
+
+                if (gameState.lives <= 0) {
+                    stopBGM();
+                    document.getElementById('gameover-modal').classList.remove('hidden');
+                }
+            }
+        }
+
+        function handleStageClear() {
+            stopBGM();
+
+            const level = gameState.currentLevel;
+            const info = LEVELS_INFO.find(l => l.level === level) || LEVELS_INFO[0];
+
+            let rank = 'bronze';
+            if (gameState.lives === 3) rank = 'gold';
+            else if (gameState.lives === 2) rank = 'silver';
+
+            const currentRank = gameState.clearedRanks[level];
+            const rankWeight = { gold: 3, silver: 2, bronze: 1 };
+            if (!currentRank || rankWeight[rank] > (rankWeight[currentRank] || 0)) {
+                gameState.clearedRanks[level] = rank;
+            }
+
+            // 次のレベル開放
+            if (level < 5) {
+                const nextLevel = level + 1;
+                if (!gameState.unlockedLevels.includes(nextLevel)) {
+                    gameState.unlockedLevels.push(nextLevel);
+                }
+            }
+
+            const prevOwnedCount = gameState.ownedCards.length;
+            const prev20Done = isFirst20Complete();
+            const prev40Done = isFirst40Complete();
+
+            // レベルに応じた枚数（1〜5枚）のカードを選出
+            const rewardedCards = [];
+            for (let i = 0; i < info.rewardCount; i++) {
+                const card = drawCardForLevel(level);
+                if (card) {
+                    rewardedCards.push(card);
+                    if (!gameState.ownedCards.includes(card.id)) {
+                        gameState.ownedCards.push(card.id);
+                        if (!gameState.newCards.includes(card.id)) {
+                            gameState.newCards.push(card.id);
+                        }
+                    } else {
+                        const idx = gameState.newCards.indexOf(card.id);
+                        if (idx !== -1) {
+                            gameState.newCards.splice(idx, 1);
+                        }
+                    }
+                }
+            }
+
+            saveData();
+
+            const currentOwnedCount = gameState.ownedCards.length;
+            const current20Done = isFirst20Complete();
+            const current40Done = isFirst40Complete();
+
+            const clearBadge = document.getElementById('clear-badge');
+            if (rank === 'gold') {
+                clearBadge.innerText = '🥇 PERFECT GOLD!';
+                clearBadge.className = 'inline-block px-4 py-1 rounded-full text-xs font-black bg-amber-400 text-slate-900 shadow gold-glow';
+            } else if (rank === 'silver') {
+                clearBadge.innerText = '🥈 SILVER CLEAR';
+                clearBadge.className = 'inline-block px-4 py-1 rounded-full text-xs font-black bg-slate-300 text-slate-900 shadow';
+            } else {
+                clearBadge.innerText = '🥉 BRONZE CLEAR';
+                clearBadge.className = 'inline-block px-4 py-1 rounded-full text-xs font-black bg-amber-700 text-white shadow';
+            }
+
+            document.getElementById('clear-title').innerText = `${info.title} クリア！`;
+            document.getElementById('clear-subtitle').innerText = `ポケモンカードを ${info.rewardCount}まい ゲットしたよ！`;
+
+            const banner = document.getElementById('world-clear-banner');
+            const reached20 = !prev20Done && current20Done;
+            const reached40 = !prev40Done && current40Done;
+            const reached60 = (prevOwnedCount < 60) && (currentOwnedCount === 60);
+            const isAlwaysCelebrate = (currentOwnedCount === 60);
+
+            if (reached60) {
+                banner.innerText = '👑 カード図鑑 60種コンプリート達成！！ 👑';
+                banner.classList.remove('hidden');
+                launchCelebration(true, true);
+                playCompleteFanfare();
+            } else if (reached40) {
+                banner.innerText = '✨ 40種コンプリート！全60種が開放されたよ！！ ✨';
+                banner.classList.remove('hidden');
+                launchCelebration(false, true);
+                playFanfare(true);
+            } else if (reached20) {
+                banner.innerText = '✨ 20種コンプリート！40種まで開放されたよ！！ ✨';
+                banner.classList.remove('hidden');
+                launchCelebration(false, true);
+                playFanfare(true);
+            } else if (isAlwaysCelebrate) {
+                banner.innerText = '👑 図鑑コンプリート中！ 👑';
+                banner.classList.remove('hidden');
+                launchCelebration(false, false);
+                playFanfare(false);
+            } else {
+                banner.classList.add('hidden');
+            }
+
+            const cardBox = document.getElementById('reward-card-container');
+            if (cardBox) {
+                cardBox.innerHTML = rewardedCards.map(c => `
+                    <div class="transform hover:scale-105 transition-transform duration-300 cursor-pointer" onclick='showCardModalById("${c.id}")'>
+                        ${createCardHtml(c, false, rewardedCards.length >= 3)}
+                    </div>
+                `).join('');
+            }
+
+            hideAllScreens();
+            document.getElementById('clear-screen').classList.remove('hidden');
+        }
+
+        // レベルと図鑑開放状況に応じた1枚抽選ロジック
+        function drawCardForLevel(level) {
+            const info = LEVELS_INFO.find(l => l.level === level) || LEVELS_INFO[0];
+            const globalLimit = getGlobalCardLimit(); // 20 -> 40 -> 60
+            const effectiveLimit = Math.min(globalLimit, info.maxPool);
+
+            const availablePool = POKEMON_CARDS.slice(0, effectiveLimit);
+            return pickWeightedCard(availablePool, level);
+        }
+
+        function handleNextStep() {
+            if (gameState.currentLevel < 5) {
+                startStage(gameState.currentLevel + 1);
+            } else {
+                showStageSelect();
+            }
+        }
+
+        function retryCurrentStage() {
+            startStage(gameState.currentLevel);
+        }
+
+        function createCardHtml(card, isModal = false, isCompact = false) {
+            const isNew = gameState.newCards.includes(card.id);
+            let scaleClass = 'w-48 h-72';
+            if (isModal) scaleClass = '';
+            else if (isCompact) scaleClass = 'w-36 h-56 sm:w-40 sm:h-60';
+
+            const rarityBadgeMap = {
+                'C': '● C', 'U': '◆ U', 'R': '★ R', 'RR': '★★ RR',
+                'AR': '🎨 AR', 'SR': '輝 SR', 'SAR': '✨ SAR', 'UR': '🏆 UR', 'MUR': '👑 MUR'
+            };
+            const rarityBadge = rarityBadgeMap[card.rarity] || card.rarity;
+
+            // C, U, R, RR はホログラムなし。AR, SR, SAR, UR, MUR のみホログラム対象
+            const isFoilRarity = ['AR', 'SR', 'SAR', 'UR', 'MUR'].includes(card.rarity);
+            let extraEffectClass = isFoilRarity ? 'card-foil' : '';
+            let borderStyle = 'border-amber-300/80';
+
+            if (card.rarity === 'MUR') {
+                extraEffectClass = 'card-foil animate-rainbow-glow';
+                borderStyle = 'border-yellow-200';
+            } else if (card.rarity === 'UR') {
+                extraEffectClass = 'card-foil';
+                borderStyle = 'border-yellow-400 gold-glow';
+            } else if (card.rarity === 'SAR' || card.rarity === 'SR') {
+                extraEffectClass = 'card-foil';
+                borderStyle = 'border-pink-300 super-glow';
+            }
+
+            // モーダル表示時はカード名称を省略（truncate）せずに全文表示
+            const nameClass = isModal 
+                ? 'text-xs sm:text-sm tracking-wide text-amber-200 drop-shadow-md leading-tight break-words font-black max-w-[140px]' 
+                : 'text-xs sm:text-sm tracking-wide truncate max-w-[95px] drop-shadow-md text-amber-200';
+
+            // 明るいキャラクターの判定（ポッチャマとカイオーガは背景を明るくするため対象外）
+            const brightNames = ['ピカチュウ', 'ライチュウ', 'サンダー', 'ミライドン', 'パモ', 'デデンネ', 'アルセウス', 'ルギア', 'ミュウ', 'ピチュー', 'プリン', 'トゲピー', 'ピッピ', 'コダック', 'イーブイ', 'ニャース', 'ポッポ'];
+            let isBrightChar = brightNames.some(b => card.name.includes(b));
+            if (card.name.includes('ポッチャマ') || card.name.includes('カイオーガ')) {
+                isBrightChar = false;
+            }
+
+            const illusBgClass = isBrightChar 
+                ? 'bg-slate-900/60 border-white/80 shadow-sm' 
+                : 'bg-white/25 border-white/40 shadow-md';
+
+            const glowClass = isBrightChar
+                ? 'from-white/30 via-slate-800/20 to-transparent'
+                : 'from-white/70 via-white/30 to-transparent';
+
+            const illusHeightClass = isCompact ? 'h-20 sm:h-24' : 'h-28 sm:h-32';
+
+            return `
+                <div class="relative ${scaleClass} rounded-2xl p-2 bg-gradient-to-b ${card.bgTone} border-4 ${borderStyle} shadow-2xl flex flex-col justify-between ${extraEffectClass} text-white overflow-hidden select-none">
+                    
+                    ${isNew ? `
+                        <div class="absolute top-1 right-1 z-50 bg-gradient-to-r from-red-500 to-pink-500 text-white font-black text-[10px] px-2 py-0.5 rounded-full border-2 border-white shadow-xl animate-bounce">
+                            NEW!
+                        </div>
+                    ` : ''}
+
+                    <div class="flex justify-between items-center z-10 font-black border-b border-white/20 pb-1">
+                        <span class="${nameClass}">${card.name}</span>
+                        <span class="text-[10px] px-1.5 py-0.5 rounded-full ${card.typeBg} font-bold shadow-sm shrink-0">HP ${card.hp}</span>
+                    </div>
+
+                    <div class="my-1 ${illusHeightClass} rounded-xl ${illusBgClass} border flex items-center justify-center relative overflow-hidden shadow-inner">
+                        <div class="absolute inset-0 opacity-50 bg-[radial-gradient(circle,_var(--tw-gradient-stops))] ${glowClass}"></div>
+                        ${getPokemonSvgIllustration(card)}
+                    </div>
+
+                    <div class="bg-slate-950/70 rounded-xl p-1.5 border border-white/10 z-10 space-y-1">
+                        <div class="flex justify-between items-center text-[11px] font-bold">
+                            <span class="text-amber-300 flex items-center gap-1 truncate">
+                                <span>${card.cost}</span>
+                                <span class="truncate">${card.attack}</span>
+                            </span>
+                            <span class="text-xs font-black text-rose-400 shrink-0 ml-1">${card.damage}</span>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-between items-center z-10 text-[10px] text-amber-200/80 pt-1 font-bold">
+                        <span>${rarityBadge}</span>
+                        <span class="uppercase tracking-widest text-amber-400">${card.rarity}</span>
+                    </div>
+                </div>
+            `;
+        }
+
+        function getPokemonSvgIllustration(card) {
+            const accent = card.accentColor || '#f59e0b';
+            const scale = card.scale || 1.0;
+            const name = card.name || '';
+
+            // 1. 絵文字表示指定のあるカード
+            if (name === 'キャタピー') {
+                return `<div class="w-full h-full flex items-center justify-center text-5xl sm:text-6xl drop-shadow-lg select-none">🐛</div>`;
+            }
+            if (name === 'コラッタ') {
+                return `<div class="w-full h-full flex items-center justify-center text-5xl sm:text-6xl drop-shadow-lg select-none">🐀</div>`;
+            }
+            if (name === 'ポッポ') {
+                return `<div class="w-full h-full flex items-center justify-center text-5xl sm:text-6xl drop-shadow-lg select-none">🐦</div>`;
+            }
+            if (name === 'ニャース') {
+                return `<div class="w-full h-full flex items-center justify-center text-5xl sm:text-6xl drop-shadow-lg select-none">🐱</div>`;
+            }
+            if (name === 'コダック') {
+                return `<div class="w-full h-full flex items-center justify-center text-5xl sm:text-6xl drop-shadow-lg select-none">🐥</div>`;
+            }
+            if (name === 'パモ') {
+                return `<div class="w-full h-full flex items-center justify-center text-5xl sm:text-6xl drop-shadow-lg select-none">🐹</div>`;
+            }
+            if (name.includes('モクロー')) {
+                return `<div class="w-full h-full flex items-center justify-center text-5xl sm:text-6xl drop-shadow-lg select-none">&#x1F989;</div>`;
+            }
+            if (name.includes('イーブイ')) {
+                return `<div class="w-full h-full flex items-center justify-center text-5xl sm:text-6xl drop-shadow-lg select-none">&#x1F436;</div>`;
+            }
+            if (name === 'トゲピー') {
+                return `<div class="w-full h-full flex items-center justify-center text-5xl sm:text-6xl drop-shadow-lg select-none">🐣</div>`;
+            }
+            if (name === 'フシギダネ') {
+                return `<div class="w-full h-full flex items-center justify-center text-5xl sm:text-6xl drop-shadow-lg select-none">🧄</div>`;
+            }
+            if (name.includes('ゼニガメ') || name.includes('カメックス')) {
+                return `<div class="w-full h-full flex items-center justify-center text-5xl sm:text-6xl drop-shadow-lg select-none">🐢</div>`;
+            }
+            if (name.includes('ポッチャマ')) {
+                return `<div class="w-full h-full flex items-center justify-center text-5xl sm:text-6xl drop-shadow-lg select-none">&#x1F427;</div>`;
+            }
+            if (name === 'シャワーズ') {
+                return `<div class="w-full h-full flex items-center justify-center text-5xl sm:text-6xl drop-shadow-lg select-none">🦭</div>`;
+            }
+            if (name === 'プリン') {
+                return `<div class="w-full h-full flex items-center justify-center text-5xl sm:text-6xl drop-shadow-lg select-none">🐽</div>`;
+            }
+            if (name === 'ケーシィ') {
+                return `<div class="w-full h-full flex items-center justify-center text-5xl sm:text-6xl drop-shadow-lg select-none">🦊</div>`;
+            }
+            if (name === 'ピッピ') {
+                return `<div class="w-full h-full flex items-center justify-center text-5xl sm:text-6xl drop-shadow-lg select-none">🐖</div>`;
+            }
+            if (name === 'メノクラゲ') {
+                return `<div class="w-full h-full flex items-center justify-center text-5xl sm:text-6xl drop-shadow-lg select-none">🪼</div>`;
+            }
+            if (name === 'ギャラドス') {
+                return `<div class="w-full h-full flex items-center justify-center text-5xl sm:text-6xl drop-shadow-lg select-none">🐉</div>`;
+            }
+            if (name.includes('ラプラス')) {
+                return `<div class="w-full h-full flex items-center justify-center text-5xl sm:text-6xl drop-shadow-lg select-none">&#x1F40B;</div>`;
+            }
+            if (name.includes('ガーディ')) {
+                return `<div class="w-full h-full flex items-center justify-center text-5xl sm:text-6xl drop-shadow-lg select-none">&#x1F42F;</div>`;
+            }
+            if (name.includes('ストライク')) {
+                return `<div class="w-full h-full flex items-center justify-center text-5xl sm:text-6xl drop-shadow-lg select-none">&#x1F997;</div>`;
+            }
+            if (name.includes('エレブー')) {
+                return `<div class="w-full h-full flex items-center justify-center text-5xl sm:text-6xl drop-shadow-lg select-none">&#x1F405;</div>`;
+            }
+            if (name.includes('ゲッコウガ')) {
+                return `<div class="w-full h-full flex items-center justify-center text-5xl sm:text-6xl drop-shadow-lg select-none">&#x1F9E3;</div>`;
+            }
+            if (name.includes('サーナイト')) {
+                return `<div class="w-full h-full flex items-center justify-center text-5xl sm:text-6xl drop-shadow-lg select-none">&#x1F9DA;</div>`;
+            }
+            if (name.includes('ゲンガー')) {
+                return `<div class="w-full h-full flex items-center justify-center text-5xl sm:text-6xl drop-shadow-lg select-none">&#x1F608;</div>`;
+            }
+            if (name.includes('ルカリオ')) {
+                return `<div class="w-full h-full flex items-center justify-center text-5xl sm:text-6xl drop-shadow-lg select-none">&#x1F98A;</div>`;
+            }
+            if (name.includes('カビゴン')) {
+                return `<div class="w-full h-full flex items-center justify-center text-5xl sm:text-6xl drop-shadow-lg select-none">&#x1F99B;</div>`;
+            }
+            if (name.includes('デデンネ')) {
+                return `<div class="w-full h-full flex items-center justify-center text-5xl sm:text-6xl drop-shadow-lg select-none">&#x1F439;</div>`;
+            }
+            if (name.includes('レックウザ') || name.includes('レックーザ')) {
+                return `<div class="w-full h-full flex items-center justify-center text-5xl sm:text-6xl drop-shadow-lg select-none">&#x1F432;</div>`;
+            }
+            if (name.includes('ナンジャモ')) {
+                return `<div class="w-full h-full flex items-center justify-center text-5xl sm:text-6xl drop-shadow-lg select-none">&#x1F469;</div>`;
+            }
+            if (name.includes('カイリュー')) {
+                return `<div class="w-full h-full flex items-center justify-center text-5xl sm:text-6xl drop-shadow-lg select-none">&#x1F42A;</div>`;
+            }
+
+            // 2. 絵文字非対象カード用の本格的・高品質SVGイラスト描画
+            let svgContent = '';
+
+            if (name.includes('ピチュー') || name.includes('ピカチュウ') || name.includes('ライチュウ')) {
+                svgContent = `
+                    <g filter="drop-shadow(0px 2px 4px rgba(0,0,0,0.5))">
+                        <polygon points="6,2 11,10 4,14" fill="#000000"/>
+                        <polygon points="26,2 21,10 28,14" fill="#000000"/>
+                        <ellipse cx="7" cy="8" rx="3" ry="6" fill="#facc15" transform="rotate(-20 7 8)"/>
+                        <ellipse cx="25" cy="8" rx="3" ry="6" fill="#facc15" transform="rotate(20 25 8)"/>
+                        <circle cx="16" cy="18" r="10" fill="#facc15"/>
+                        <circle cx="12" cy="16" r="1.5" fill="#000000"/>
+                        <circle cx="20" cy="16" r="1.5" fill="#000000"/>
+                        <circle cx="9" cy="20" r="2.5" fill="#ef4444"/>
+                        <circle cx="23" cy="20" r="2.5" fill="#ef4444"/>
+                        <path d="M14 21 Q16 23 18 21" stroke="#000000" stroke-width="1.5" fill="none"/>
+                        <polygon points="24,24 28,16 26,28 31,22" fill="#eab308" stroke="#000" stroke-width="0.5"/>
+                    </g>
+                `;
+            } else if (name.includes('リザードン') || name.includes('ヒトカゲ')) {
+                svgContent = `
+                    <g filter="drop-shadow(0px 2px 4px rgba(0,0,0,0.5))">
+                        <path d="M4 14 C1 6 12 4 12 14 Z" fill="#065f46" stroke="#ea580c" stroke-width="1"/>
+                        <path d="M28 14 C31 6 20 4 20 14 Z" fill="#065f46" stroke="#ea580c" stroke-width="1"/>
+                        <path d="M10 26 C10 16 22 16 22 26 Z" fill="#ea580c"/>
+                        <ellipse cx="16" cy="22" rx="4" ry="5" fill="#fef08a"/>
+                        <path d="M11 12 Q16 6 21 12 Q16 16 11 12 Z" fill="#ea580c"/>
+                        <circle cx="14" cy="11" r="1" fill="#000"/>
+                        <circle cx="18" cy="11" r="1" fill="#000"/>
+                        <polygon points="16,2 18,7 14,7" fill="#ef4444"/>
+                        <polygon points="16,0 19,5 13,5" fill="#f59e0b"/>
+                    </g>
+                `;
+            } else if (name.includes('フシギバナ')) {
+                svgContent = `
+                    <g filter="drop-shadow(0px 2px 4px rgba(0,0,0,0.5))">
+                        <circle cx="16" cy="8" r="7" fill="#ec4899"/>
+                        <circle cx="16" cy="8" r="3" fill="#facc15"/>
+                        <path d="M4 16 C8 10 12 14 16 12" stroke="#15803d" stroke-width="4" fill="none"/>
+                        <path d="M28 16 C24 10 20 14 16 12" stroke="#15803d" stroke-width="4" fill="none"/>
+                        <rect x="8" y="16" width="16" height="12" rx="6" fill="#0d9488"/>
+                        <circle cx="12" cy="20" r="1.5" fill="#ef4444"/>
+                        <circle cx="20" cy="20" r="1.5" fill="#ef4444"/>
+                    </g>
+                `;
+            } else if (name.includes('ミュウツー') || name.includes('ミュウ')) {
+                svgContent = `
+                    <g filter="drop-shadow(0px 2px 4px rgba(0,0,0,0.5))">
+                        <circle cx="16" cy="16" r="13" fill="none" stroke="#a855f7" stroke-width="2" stroke-dasharray="4 2"/>
+                        <path d="M12 28 Q4 20 12 12 Q20 16 20 28 Z" fill="#a855f7" opacity="0.8"/>
+                        <circle cx="16" cy="12" r="6" fill="#e9d5ff"/>
+                        <circle cx="14" cy="11" r="1" fill="#38bdf8"/>
+                        <circle cx="18" cy="11" r="1" fill="#38bdf8"/>
+                        <circle cx="24" cy="10" r="4" fill="#38bdf8" opacity="0.9"/>
+                    </g>
+                `;
+            } else if (name.includes('サンダース')) {
+                svgContent = `
+                    <g filter="drop-shadow(0px 2px 4px rgba(0,0,0,0.5))">
+                        <polygon points="16,2 20,8 26,4 22,12 30,12 22,16 28,24 18,20 16,30 14,20 4,24 10,16 2,12 10,12 6,4 12,8" fill="#facc15"/>
+                        <circle cx="16" cy="16" r="6" fill="#ffffff"/>
+                        <circle cx="14" cy="15" r="1.5" fill="#000"/>
+                        <circle cx="18" cy="15" r="1.5" fill="#000"/>
+                    </g>
+                `;
+            } else if (name.includes('ブースター')) {
+                svgContent = `
+                    <g filter="drop-shadow(0px 2px 4px rgba(0,0,0,0.5))">
+                        <path d="M6 10 C6 2 26 2 26 10 Z" fill="#ea580c"/>
+                        <ellipse cx="16" cy="18" rx="10" ry="8" fill="#fef08a"/>
+                        <circle cx="16" cy="14" r="5" fill="#ea580c"/>
+                        <circle cx="14" cy="13" r="1" fill="#000"/>
+                        <circle cx="18" cy="13" r="1" fill="#000"/>
+                        <path d="M16 2 L19 7 L13 7 Z" fill="#fef08a"/>
+                    </g>
+                `;
+            } else if (name.includes('ロコン')) {
+                svgContent = `
+                    <g filter="drop-shadow(0px 2px 4px rgba(0,0,0,0.5))">
+                        <circle cx="16" cy="16" r="8" fill="#ea580c"/>
+                        <circle cx="12" cy="8" r="3" fill="#fef08a"/>
+                        <circle cx="16" cy="6" r="3" fill="#fef08a"/>
+                        <circle cx="20" cy="8" r="3" fill="#fef08a"/>
+                        <path d="M8 24 Q4 18 10 20 M12 26 Q8 20 14 22 M24 24 Q28 18 22 20" stroke="#f97316" stroke-width="3" fill="none"/>
+                    </g>
+                `;
+            } else if (name.includes('パルシェン')) {
+                svgContent = `
+                    <g filter="drop-shadow(0px 2px 4px rgba(0,0,0,0.5))">
+                        <polygon points="16,2 20,8 28,6 24,14 30,22 20,22 16,30 12,22 2,22 8,14 4,6 12,8" fill="#3b0764"/>
+                        <circle cx="16" cy="16" r="7" fill="#000000"/>
+                        <circle cx="13" cy="15" r="1.5" fill="#ffffff"/>
+                        <circle cx="19" cy="15" r="1.5" fill="#ffffff"/>
+                        <polygon points="16,8 18,12 14,12" fill="#ffffff"/>
+                    </g>
+                `;
+            } else if (name.includes('フリーザー')) {
+                svgContent = `
+                    <g filter="drop-shadow(0px 2px 4px rgba(0,0,0,0.5))">
+                        <path d="M2 14 Q16 4 30 14 Q16 20 2 14 Z" fill="#38bdf8"/>
+                        <circle cx="16" cy="14" r="5" fill="#0284c7"/>
+                        <polygon points="14,4 16,0 18,4" fill="#e0f2fe"/>
+                        <path d="M16 19 C10 28 22 28 16 32" stroke="#e0f2fe" stroke-width="2" fill="none"/>
+                    </g>
+                `;
+            } else if (name.includes('サンダー')) {
+                svgContent = `
+                    <g filter="drop-shadow(0px 2px 4px rgba(0,0,0,0.5))">
+                        <polygon points="16,2 19,10 28,4 22,14 30,12 22,20 26,30 16,22 6,30 10,20 2,12 10,14 4,4 13,10" fill="#facc15"/>
+                        <polygon points="16,6 18,12 14,12" fill="#000000"/>
+                        <circle cx="16" cy="16" r="4" fill="#eab308"/>
+                    </g>
+                `;
+            } else if (name.includes('ファイヤー')) {
+                svgContent = `
+                    <g filter="drop-shadow(0px 2px 4px rgba(0,0,0,0.5))">
+                        <path d="M2 18 C8 4 24 4 30 18 C20 12 12 12 2 18 Z" fill="#ef4444"/>
+                        <path d="M6 16 C10 8 22 8 26 16 C20 14 12 14 6 16 Z" fill="#f97316"/>
+                        <circle cx="16" cy="14" r="4" fill="#facc15"/>
+                        <path d="M14 6 L16 1 L18 6 Z" fill="#ef4444"/>
+                    </g>
+                `;
+            } else if (name.includes('ハッサム')) {
+                svgContent = `
+                    <g filter="drop-shadow(0px 2px 4px rgba(0,0,0,0.5))">
+                        <rect x="10" y="8" width="12" height="16" rx="6" fill="#dc2626"/>
+                        <circle cx="6" cy="14" r="4" fill="#991b1b" stroke="#facc15" stroke-width="1"/>
+                        <circle cx="26" cy="14" r="4" fill="#991b1b" stroke="#facc15" stroke-width="1"/>
+                        <circle cx="14" cy="12" r="1.5" fill="#facc15"/>
+                        <circle cx="18" cy="12" r="1.5" fill="#facc15"/>
+                    </g>
+                `;
+            } else if (name.includes('アルセウス')) {
+                svgContent = `
+                    <g filter="drop-shadow(0px 2px 4px rgba(0,0,0,0.5))">
+                        <circle cx="16" cy="16" r="11" fill="none" stroke="#fde047" stroke-width="3"/>
+                        <polygon points="16,2 20,12 30,12 22,18 25,28 16,22 7,28 10,18 2,12 12,12" fill="#ffffff" opacity="0.9"/>
+                        <circle cx="16" cy="16" r="4" fill="#eab308"/>
+                        <circle cx="16" cy="16" r="2" fill="#10b981"/>
+                    </g>
+                `;
+            } else if (name.includes('ミライドン')) {
+                svgContent = `
+                    <g filter="drop-shadow(0px 2px 4px rgba(0,0,0,0.5))">
+                        <circle cx="16" cy="16" r="12" fill="none" stroke="#06b6d4" stroke-width="2"/>
+                        <path d="M10 24 C10 10 22 10 22 24 Z" fill="#8b5cf6"/>
+                        <circle cx="16" cy="18" r="5" fill="#06b6d4"/>
+                        <polygon points="16,4 19,10 13,10" fill="#a855f7"/>
+                    </g>
+                `;
+            } else if (name.includes('コライドン')) {
+                svgContent = `
+                    <g filter="drop-shadow(0px 2px 4px rgba(0,0,0,0.5))">
+                        <circle cx="16" cy="16" r="10" fill="#e11d48"/>
+                        <path d="M6 10 L16 2 L26 10 Z" fill="#38bdf8"/>
+                        <circle cx="16" cy="16" r="5" fill="#ffffff"/>
+                        <circle cx="16" cy="16" r="3" fill="#1e293b"/>
+                    </g>
+                `;
+            } else if (name.includes('ギラティナ')) {
+                svgContent = `
+                    <g filter="drop-shadow(0px 2px 4px rgba(0,0,0,0.5))">
+                        <path d="M2 8 Q16 20 30 8 M2 24 Q16 12 30 24" stroke="#dc2626" stroke-width="4" fill="none"/>
+                        <circle cx="16" cy="16" r="8" fill="#64748b"/>
+                        <path d="M12 8 L16 2 L20 8 Z" fill="#f59e0b"/>
+                        <circle cx="14" cy="15" r="1.5" fill="#ef4444"/>
+                        <circle cx="18" cy="15" r="1.5" fill="#ef4444"/>
+                    </g>
+                `;
+            } else if (name.includes('ルギア')) {
+                svgContent = `
+                    <g filter="drop-shadow(0px 2px 4px rgba(0,0,0,0.5))">
+                        <path d="M2 16 Q16 2 30 16 Q16 26 2 16 Z" fill="#f8fafc"/>
+                        <path d="M10 14 Q16 10 22 14" stroke="#1e40af" stroke-width="3" fill="none"/>
+                        <circle cx="16" cy="14" r="2" fill="#1e40af"/>
+                    </g>
+                `;
+            } else if (name.includes('カイオーガ')) {
+                svgContent = `
+                    <g filter="drop-shadow(0px 2px 4px rgba(0,0,0,0.5))">
+                        <ellipse cx="16" cy="16" rx="14" ry="9" fill="#1e3a8a"/>
+                        <path d="M6 16 L26 16" stroke="#ef4444" stroke-width="2"/>
+                        <circle cx="10" cy="13" r="1.5" fill="#ffffff"/>
+                        <circle cx="22" cy="13" r="1.5" fill="#ffffff"/>
+                    </g>
+                `;
+            } else {
+                svgContent = `
+                    <g filter="drop-shadow(0px 2px 4px rgba(0,0,0,0.5))">
+                        <circle cx="16" cy="16" r="10" fill="${accent}"/>
+                        <polygon points="16,4 19,12 28,12 21,17 24,25 16,20 8,25 11,17 4,12 13,12" fill="#ffffff" opacity="0.6"/>
+                    </g>
+                `;
+            }
+
+            return `
+                <svg class="w-20 h-20" viewBox="0 0 32 32" style="transform: scale(${scale});">
+                    ${svgContent}
+                </svg>
+            `;
+        }
+
+        // --- アルバム（カードずかん）機能 ---
+
+        function renderAlbumFilters() {
+            const filterBar = document.getElementById('album-filter-bar');
+            if (!filterBar) return;
+
+            const limit = getGlobalCardLimit(); // 20 -> 40 -> 60
+            const availableCards = POKEMON_CARDS.slice(0, limit);
+            const availableRarities = RARITY_ORDER.filter(r => availableCards.some(c => c.rarity === r));
+            const filters = ['ALL', ...availableRarities];
+
+            if (!filters.includes(currentAlbumFilter)) {
+                currentAlbumFilter = 'ALL';
+            }
+
+            filterBar.innerHTML = '';
+
+            filters.forEach(rarity => {
+                const btn = document.createElement('button');
+                
+                let count = 0;
+                let totalInRarity = 0;
+
+                if (rarity === 'ALL') {
+                    count = availableCards.filter(c => gameState.ownedCards.includes(c.id)).length;
+                    totalInRarity = limit;
+                } else {
+                    count = availableCards.filter(c => c.rarity === rarity && gameState.ownedCards.includes(c.id)).length;
+                    totalInRarity = availableCards.filter(c => c.rarity === rarity).length;
+                }
+
+                const isActive = currentAlbumFilter === rarity;
+
+                btn.className = `px-3 py-1 rounded-full text-xs font-black whitespace-nowrap transition-all ${
+                    isActive 
+                        ? 'bg-amber-400 text-slate-900 border-2 border-white shadow' 
+                        : 'bg-slate-800 text-slate-300 hover:bg-slate-700 border border-indigo-500/30'
+                }`;
+                btn.innerText = `${rarity} (${count}/${totalInRarity})`;
+                btn.onclick = () => {
+                    currentAlbumFilter = rarity;
+                    renderAlbumFilters();
+                    renderAlbumGrid();
+                };
+                filterBar.appendChild(btn);
+            });
+        }
+
+        function showAlbum() {
+            stopBGM();
+            hideAllScreens();
+            document.getElementById('album-screen').classList.remove('hidden');
+            renderAlbumFilters();
+            renderAlbumGrid();
+        }
+
+        function renderAlbumGrid() {
+            const grid = document.getElementById('album-grid');
+            if (!grid) return;
+            grid.innerHTML = '';
+
+            const limit = getGlobalCardLimit();
+            const availableCards = POKEMON_CARDS.slice(0, limit);
+
+            let filteredCards = availableCards;
+            if (currentAlbumFilter !== 'ALL') {
+                filteredCards = availableCards.filter(c => c.rarity === currentAlbumFilter);
+            }
+
+            filteredCards.forEach(card => {
+                const isOwned = gameState.ownedCards.includes(card.id);
+                const wrapper = document.createElement('div');
+                wrapper.className = "flex justify-center items-center cursor-pointer transform hover:scale-105 transition-transform duration-200";
+
+                if (isOwned) {
+                    wrapper.innerHTML = createCardHtml(card);
+                    wrapper.onclick = () => showCardModal(card);
+                } else {
+                    wrapper.innerHTML = `
+                        <div class="w-full h-44 sm:h-52 rounded-2xl bg-slate-900/80 border-2 border-slate-700 flex flex-col items-center justify-center text-slate-600 p-2 text-center shadow-inner relative overflow-hidden">
+                            <i data-lucide="lock" class="w-8 h-8 mb-2 text-slate-600"></i>
+                            <span class="text-xs font-bold text-slate-500">???</span>
+                            <span class="text-[10px] text-slate-600 mt-1 uppercase font-bold">${card.rarity}</span>
+                        </div>
+                    `;
+                }
+                grid.appendChild(wrapper);
+            });
+
+            if (window.lucide) lucide.createIcons();
+        }
+
+        function showCardModalById(cardId) {
+            const card = POKEMON_CARDS.find(c => c.id === cardId);
+            if (card) showCardModal(card);
+        }
+
+        function showCardModal(card) {
+            const container = document.getElementById('modal-card-container');
+            if (!container) return;
+            container.innerHTML = createCardHtml(card, true);
+
+            // 既読処理
+            const newIndex = gameState.newCards.indexOf(card.id);
+            if (newIndex !== -1) {
+                gameState.newCards.splice(newIndex, 1);
+                saveData();
+                if (!document.getElementById('album-screen').classList.contains('hidden')) {
+                    renderAlbumGrid();
+                }
+            }
+
+            document.getElementById('card-modal').classList.remove('hidden');
+        }
+
+        function closeCardModal() {
+            document.getElementById('card-modal').classList.add('hidden');
+        }
+
+        // --- お祝い演出（紙吹雪 & 連発花火） ---
+        let celebrationAnimId = null;
+
+        function launchCelebration(isComplete = false, isAllClear = false) {
+            const canvas = document.getElementById('celebration-canvas');
+            if (!canvas) return;
+            canvas.classList.remove('hidden');
+            const ctx = canvas.getContext('2d');
+            
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+
+            const particles = [];
+            const fireworks = [];
+
+            const particleCount = isComplete ? 200 : (isAllClear ? 150 : 80);
+            const colors = ['#f43f5e', '#ec4899', '#d946ef', '#a855f7', '#6366f1', '#3b82f6', '#06b6d4', '#10b981', '#84cc16', '#eab308', '#f97316'];
+
+            for (let i = 0; i < particleCount; i++) {
+                particles.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height - canvas.height,
+                    size: Math.random() * 8 + 4,
+                    color: colors[Math.floor(Math.random() * colors.length)],
+                    vx: Math.random() * 2 - 1,
+                    vy: Math.random() * 3 + 2,
+                    rot: Math.random() * 360,
+                    vRot: Math.random() * 10 - 5
+                });
+            }
+
+            function createFirework() {
+                const fx = Math.random() * (canvas.width * 0.8) + canvas.width * 0.1;
+                const fy = Math.random() * (canvas.height * 0.5) + canvas.height * 0.1;
+                const count = Math.floor(Math.random() * 30) + 40;
+                const fwColor = colors[Math.floor(Math.random() * colors.length)];
+
+                for (let i = 0; i < count; i++) {
+                    const angle = (Math.PI * 2 / count) * i + Math.random() * 0.2;
+                    const speed = Math.random() * 5 + 3;
+                    fireworks.push({
+                        x: fx,
+                        y: fy,
+                        vx: Math.cos(angle) * speed,
+                        vy: Math.sin(angle) * speed,
+                        size: Math.random() * 3 + 2,
+                        color: fwColor,
+                        alpha: 1,
+                        decay: Math.random() * 0.02 + 0.015
+                    });
+                }
+            }
+
+            let fwTimer = 0;
+            const fwFrequency = isComplete ? 12 : 25;
+
+            if (celebrationAnimId) cancelAnimationFrame(celebrationAnimId);
+
+            function loop() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                fwTimer++;
+                if (fwTimer % fwFrequency === 0) {
+                    createFirework();
+                }
+
+                for (let i = fireworks.length - 1; i >= 0; i--) {
+                    const fw = fireworks[i];
+                    fw.x += fw.vx;
+                    fw.y += fw.vy;
+                    fw.vy += 0.05;
+                    fw.alpha -= fw.decay;
+
+                    if (fw.alpha <= 0) {
+                        fireworks.splice(i, 1);
+                        continue;
+                    }
+
+                    ctx.save();
+                    ctx.globalAlpha = fw.alpha;
+                    ctx.fillStyle = fw.color;
+                    ctx.beginPath();
+                    ctx.arc(fw.x, fw.y, fw.size, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.restore();
+                }
+
+                particles.forEach(p => {
+                    p.x += p.vx;
+                    p.y += p.vy;
+                    p.rot += p.vRot;
+
+                    if (p.y > canvas.height) {
+                        p.y = -10;
+                        p.x = Math.random() * canvas.width;
+                    }
+
+                    ctx.save();
+                    ctx.translate(p.x, p.y);
+                    ctx.rotate((p.rot * Math.PI) / 180);
+                    ctx.fillStyle = p.color;
+                    ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size);
+                    ctx.restore();
+                });
+
+                celebrationAnimId = requestAnimationFrame(loop);
+            }
+
+            loop();
+
+            setTimeout(() => {
+                if (celebrationAnimId) cancelAnimationFrame(celebrationAnimId);
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                canvas.classList.add('hidden');
+            }, isComplete ? 8000 : 5000);
+        }
+
+        // ウィンドウロード時初期化
+        window.onload = function() {
+            loadSaveData();
+            showStageSelect();
+        };
+    </script>
+</body>
+</html>
